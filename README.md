@@ -6,7 +6,7 @@
 
 ## Overview
 
-OneTicketing Sync is a Splunk SOAR app for **federated Parent-Child case management** across multiple Splunk Enterprise Security (ES) 8.4 instances.
+OneTicketing Sync is a Splunk SOAR app for **federated Parent-Child case management** across multiple Splunk SOAR 8.4 instances.
 
 **Core idea:** The same app is installed on every SOAR instance. Each instance is configured as either a **Parent** (coordinator) or a **Child** (national/regional CERT). All sync actions are analyst-initiated via widgets — nothing runs automatically.
 
@@ -27,7 +27,7 @@ PARENT SOAR (e.g. CERT-CTI)
   ├── Playbook: oneticketing_parent_manager
   └── Widget: create_child_task.html        ← "+ Child Task" and "↑ Update" buttons
 
-CHILD SOAR (e.g. DE-OT, NO-OT, ...)
+CHILD SOAR (e.g. DE, NO, ...)
   ├── App: OneTicketing Sync (role = child)
   ├── Asset config: server + ph_auth_token  ← points to Parent
   ├── Playbook: oneticketing_child_manager
@@ -52,7 +52,7 @@ CHILD SOAR (e.g. DE-OT, NO-OT, ...)
 
 | Package | Purpose |
 |---------|---------|
-| `requests` | HTTP client for ES 8.4 REST API |
+| `requests` | HTTP client for SOAR 8.4 REST API |
 | `urllib3` | TLS/retry support |
 
 No system binaries required.
@@ -80,7 +80,7 @@ Create **one asset** with `instance_role = parent`:
 | `server` | *(leave empty)* | Not needed when using `children_registry` |
 | `ph_auth_token` | *(leave empty)* | Not needed when using `children_registry` |
 | `children_registry` | JSON map ↓ | All child connections in one password field |
-| `children_registry_ids` | `DE_OT, NO_OT, SE_OT` | Plain-text — must match registry keys exactly |
+| `children_registry_ids` | `DE, NO, SE` | Plain-text — must match registry keys exactly |
 | `phantom_token` | SOAR automation user token | Needed to read `targetChildId` from artifact CEF via local REST |
 | `container_label` | `events` | Default label for child cases. Must exist in Admin → Event Settings → Labels |
 | `default_workbook` | `IT Security Investigation` | Workbook template name. Leave empty for system default |
@@ -89,9 +89,9 @@ Create **one asset** with `instance_role = parent`:
 **`children_registry` format** (enter as JSON in the password field):
 ```json
 {
-  "DE_OT": { "url": "https://de-ot.soar.example.com", "token": "xxxx" },
-  "NO_OT": { "url": "https://no-ot.soar.example.com", "token": "yyyy" },
-  "SE_OT": { "url": "https://se-ot.soar.example.com", "token": "zzzz" }
+  "DE_OT": { "url": "https://de.soar.example.com", "token": "xxxx" },
+  "NO_OT": { "url": "https://no.soar.example.com", "token": "yyyy" },
+  "SE_OT": { "url": "https://se.soar.example.com", "token": "zzzz" }
 }
 ```
 
@@ -104,7 +104,7 @@ Create **one asset** per Child, pointing to the Parent:
 | Field | Value | Notes |
 |-------|-------|-------|
 | `instance_role` | `child` | Required |
-| `child_id` | `DE_OT` | Must match the key in parent's `children_registry` |
+| `child_id` | `DE` | Must match the key in parent's `children_registry` |
 | `server` | `https://parent.soar.example.com` | Parent SOAR URL |
 | `ph_auth_token` | *(Parent automation user token)* | REST API token from Parent SOAR |
 | `phantom_token` | *(local automation user token)* | Get from: Admin → User Management → Automation user → Copy auth token |
@@ -224,7 +224,7 @@ Creates a Child case on a remote Child instance and links it to a Parent case.
 | `case_name` | Yes | Title for the new child case |
 | `description` | Yes | Investigation scope |
 | `severity` | Yes | `low` / `medium` / `high` / `critical` |
-| `target_child_id` | No | Registry key (e.g. `DE_OT`). Read from artifact CEF if empty |
+| `target_child_id` | No | Registry key (e.g. `DE`). Read from artifact CEF if empty |
 | `tlp` | No | TLP classification. Default: `TLP.AMBER` |
 | `assigned_to` | No | Splunk username on child instance |
 | `tags` | No | Comma-separated tags |
@@ -321,7 +321,7 @@ cat > /tmp/test_connectivity.json << 'EOF'
   "config": {
     "server": "https://parent.soar.example.com",
     "instance_role": "child",
-    "child_id": "DE_OT",
+    "child_id": "DE",
     "ph_auth_token": "your-token-here",
     "verify_ssl": false,
     "enable_offline_queue": true
