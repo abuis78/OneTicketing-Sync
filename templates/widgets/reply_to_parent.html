@@ -1,0 +1,394 @@
+<div class="no-padding fill-space"><div class="grid fill-space"><div class="grid-body widget-body no-border fill-space"><div class="scoller scrollbar-hidden">
+<style>
+/* ── Reply-to-Parent Widget v1.3.18 ── */
+#otr-tb-btn{background:#2a7a3a!important;color:#fff!important;border:none!important;padding:5px 13px!important;border-radius:4px!important;cursor:pointer!important;font-size:12px!important;font-weight:600!important;white-space:nowrap!important;margin:0 6px!important;vertical-align:middle!important}
+#otr-tb-btn:hover{background:#1a5a2a!important}
+#otr-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:99999;align-items:center;justify-content:center}
+#otr-modal{background:#1e2126;color:#ccd;border-radius:8px;padding:24px;width:580px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.7)}
+#otr-modal h3{margin:0 0 4px;color:#fff;font-size:15px}
+#otr-step-ind{font-size:11px;color:#888;margin-bottom:16px;display:block}
+#otr-modal label{display:block;font-size:11px;color:#999;margin:10px 0 3px}
+#otr-modal input,#otr-modal textarea{width:100%;box-sizing:border-box;background:#2a2f3a;border:1px solid #444;color:#eee;padding:5px 8px;border-radius:4px;font-size:13px}
+#otr-modal textarea{height:90px;resize:vertical}
+/* Observable list */
+#otr-obs-filter{margin-bottom:8px}
+#otr-obs-list{max-height:280px;overflow-y:auto;border:1px solid #333;border-radius:4px;padding:6px}
+#otr-obs-list::-webkit-scrollbar{width:6px}
+#otr-obs-list::-webkit-scrollbar-thumb{background:#444;border-radius:3px}
+.otr-obs-row{display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid #2a2f3a;font-size:12px}
+.otr-obs-row:last-child{border-bottom:none}
+.otr-obs-row input[type=checkbox]{flex:0 0 16px;cursor:pointer}
+.otr-type-badge{flex:0 0 52px;font-size:10px;padding:2px 5px;border-radius:3px;text-align:center;font-weight:600}
+.otr-type-ip{background:#5a1a1a;color:#ff8888}
+.otr-type-domain{background:#1a3a5a;color:#88aaff}
+.otr-type-hash{background:#2a2a1a;color:#ffcc44}
+.otr-type-email{background:#1a2a1a;color:#88cc88}
+.otr-type-other{background:#2a2a2a;color:#aaa}
+.otr-obs-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#ccd}
+.otr-obs-val{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#888;font-size:11px}
+#otr-sel-count{font-size:11px;color:#888;margin:6px 0 2px}
+/* New observable rows */
+.otr-new-row{display:flex;gap:6px;align-items:center;margin-bottom:5px}
+.otr-new-row select{flex:0 0 175px;background:#2a2f3a;border:1px solid #444;color:#eee;padding:4px 6px;border-radius:4px;font-size:12px}
+.otr-new-row input{flex:1;background:#2a2f3a;border:1px solid #444;color:#eee;padding:4px 6px;border-radius:4px;font-size:12px}
+.otr-rm{background:#555;color:#fff;border:none;padding:3px 7px;border-radius:3px;cursor:pointer;font-size:11px}
+#otr-add-obs{background:#2a3a2a;color:#8c8;border:1px solid #3a5a3a;padding:4px 12px;border-radius:3px;cursor:pointer;font-size:12px;margin-top:6px}
+/* Footer */
+.otr-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.otr-btn-sec{background:#333;color:#ccd;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-size:12px}
+.otr-btn-pri{background:#2a7a3a;color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:600}
+.otr-btn-pri:disabled{opacity:.5;cursor:not-allowed}
+#otr-preview{font-size:11px;color:#888;margin-top:8px}
+#otr-msg{margin-top:8px;font-size:12px;min-height:14px}
+#otr-loading{color:#888;font-size:13px;padding:16px 0;text-align:center}
+#otr-all-wrap{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;font-size:11px;color:#888}
+</style>
+
+<div id="otr-root"></div>
+
+<div id="otr-overlay">
+<div id="otr-modal">
+  <h3>↩ Reply to Parent</h3>
+  <span id="otr-step-ind">Step 1 of 2 — Select observables</span>
+
+  <!-- ── Step 1: Observables ── -->
+  <div id="otr-step1">
+    <div id="otr-loading">Loading observables...</div>
+    <div id="otr-obs-section" style="display:none">
+      <label>Filter observables</label>
+      <input id="otr-obs-filter" type="text" placeholder="IP, domain, hash...">
+      <div id="otr-all-wrap">
+        <label style="margin:0;display:flex;align-items:center;gap:5px;cursor:pointer">
+          <input type="checkbox" id="otr-all"> Select all
+        </label>
+        <span id="otr-sel-count">0 selected</span>
+      </div>
+      <div id="otr-obs-list"></div>
+    </div>
+    <div id="otr-no-obs" style="display:none;color:#888;font-size:12px;padding:8px 0">
+      No unsynced artifacts found.
+    </div>
+    <!-- Always-visible: add new observables (shown after loading, regardless of existing artifacts) -->
+    <div id="otr-add-section" style="display:none">
+      <label style="margin-top:12px">Add new observables</label>
+      <div id="otr-new-obs"></div>
+      <button id="otr-add-obs" type="button">+ Add observable</button>
+    </div>
+    <div class="otr-foot">
+      <button class="otr-btn-sec" id="otr-cancel1" type="button">Cancel</button>
+      <button class="otr-btn-sec" id="otr-skip1" type="button">Skip →</button>
+      <button class="otr-btn-pri" id="otr-next1" type="button">Next →</button>
+    </div>
+  </div>
+
+  <!-- ── Step 2: Note ── -->
+  <div id="otr-step2" style="display:none">
+    <label>Subject (optional)</label>
+    <input id="otr-title" type="text" placeholder="e.g. Analysis complete — IOC confirmed">
+    <label>Reply / Findings *</label>
+    <textarea id="otr-note" placeholder="Analysis results, recommendations, follow-up questions..."></textarea>
+    <div id="otr-preview"></div>
+    <div class="otr-foot">
+      <button class="otr-btn-sec" id="otr-back2" type="button">← Back</button>
+      <button class="otr-btn-pri" id="otr-submit" type="button">Send to Parent</button>
+    </div>
+    <div id="otr-msg"></div>
+  </div>
+</div>
+</div>
+
+<script type="text/javascript">
+/* v1.3.18 — Reply to Parent widget — runs in SOAR main-page context */
+(function(){
+  var CEF_FIELDS=["sourceAddress","destinationAddress","domainName","requestURL",
+    "fileHashMd5","fileHashSha1","fileHashSha256","emailAddress",
+    "fileName","filePath","sourcePort","destinationPort","userAgent","subject"];
+
+  var _parentCaseId = null;
+  var _allArtifacts = [];   // unsynced artifacts available for selection
+  var _selectedIds  = [];
+  var _newObs       = [];
+
+  /* ── helpers ── */
+  function getCid(){
+    try{ var m=window.location.pathname.match(/\/mission\/(\d+)/); return m?parseInt(m[1],10):0; }
+    catch(e){ return 0; }
+  }
+  function getCsrf(){
+    try{ return (document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/)||[])[1]||""; }catch(e){ return ""; }
+  }
+  function typeInfo(art){
+    var cef=art.cef||{};
+    if(cef.sourceAddress||cef.destinationAddress) return {cls:"otr-type-ip",   label:"IP"};
+    if(cef.domainName||cef.requestURL)            return {cls:"otr-type-domain",label:"Domain"};
+    if(cef.fileHashMd5||cef.fileHashSha1||cef.fileHashSha256) return {cls:"otr-type-hash",label:"Hash"};
+    if(cef.emailAddress)                          return {cls:"otr-type-email", label:"Email"};
+    return {cls:"otr-type-other",label:"Other"};
+  }
+  function cefSummary(cef){
+    var entries=Object.entries(cef||{});
+    if(!entries.length) return "";
+    return entries.slice(0,2).map(function(e){ return e[0]+": "+String(e[1]).slice(0,30); }).join(" · ");
+  }
+  function updateSelCount(){
+    var checked=document.querySelectorAll("#otr-obs-list input[type=checkbox]:checked");
+    document.getElementById("otr-sel-count").textContent = checked.length+" selected";
+  }
+
+  /* ── Step 1: render observable list ── */
+  function renderObsList(){
+    var filter=(document.getElementById("otr-obs-filter")||{}).value||"";
+    filter=filter.toLowerCase();
+    var list=document.getElementById("otr-obs-list");
+    list.innerHTML="";
+    var shown=_allArtifacts.filter(function(a){
+      if(!filter) return true;
+      return (a.name+" "+JSON.stringify(a.cef||{})).toLowerCase().indexOf(filter)>=0;
+    });
+    if(!shown.length){
+      list.innerHTML='<div style="color:#666;font-size:12px;padding:8px">No matches.</div>';
+      return;
+    }
+    shown.forEach(function(art){
+      var ti=typeInfo(art);
+      var row=document.createElement("div"); row.className="otr-obs-row";
+      var cb=document.createElement("input"); cb.type="checkbox"; cb.value=art.id;
+      cb.addEventListener("change", updateSelCount);
+      var badge=document.createElement("span");
+      badge.className="otr-type-badge "+ti.cls; badge.textContent=ti.label;
+      var name=document.createElement("span"); name.className="otr-obs-name";
+      name.textContent=art.name||"Artifact #"+art.id;
+      var val=document.createElement("span"); val.className="otr-obs-val";
+      val.textContent=cefSummary(art.cef);
+      row.appendChild(cb); row.appendChild(badge); row.appendChild(name); row.appendChild(val);
+      list.appendChild(row);
+    });
+    updateSelCount();
+  }
+
+  /* ── new observable rows ── */
+  function addNewObsRow(){
+    var wrap=document.createElement("div"); wrap.className="otr-new-row";
+    var sel=document.createElement("select");
+    CEF_FIELDS.forEach(function(f){ var o=document.createElement("option"); o.value=f; o.text=f; sel.appendChild(o); });
+    var inp=document.createElement("input"); inp.type="text"; inp.placeholder="Value";
+    var rm=document.createElement("button"); rm.className="otr-rm"; rm.type="button"; rm.textContent="X";
+    rm.onclick=function(){ wrap.parentNode.removeChild(wrap); };
+    wrap.appendChild(sel); wrap.appendChild(inp); wrap.appendChild(rm);
+    document.getElementById("otr-new-obs").appendChild(wrap);
+  }
+  function collectNewObs(){
+    var rows=document.querySelectorAll("#otr-new-obs .otr-new-row"); var out=[];
+    rows.forEach(function(r){
+      var f=r.querySelector("select").value;
+      var v=r.querySelector("input").value.trim();
+      if(v){ var cef={}; cef[f]=v; out.push({name:f+": "+v,type:"network",cef:cef}); }
+    });
+    return out;
+  }
+
+  /* ── step navigation ── */
+  function goStep2(skip){
+    _selectedIds=skip?[]:Array.from(document.querySelectorAll("#otr-obs-list input[type=checkbox]:checked"))
+      .map(function(cb){ return cb.value; });
+    _newObs=skip?[]:collectNewObs();
+    document.getElementById("otr-step1").style.display="none";
+    document.getElementById("otr-step2").style.display="block";
+    document.getElementById("otr-step-ind").textContent="Step 2 of 2 — Compose reply";
+    updatePreview();
+  }
+  function goStep1(){
+    document.getElementById("otr-step2").style.display="none";
+    document.getElementById("otr-step1").style.display="block";
+    document.getElementById("otr-step-ind").textContent="Step 1 of 2 — Select observables";
+  }
+  function updatePreview(){
+    var n=_selectedIds.length+_newObs.length;
+    var prev=document.getElementById("otr-preview");
+    prev.textContent = n>0
+      ? n+" observable(s) + note will be sent to Parent #"+_parentCaseId
+      : "Only note will be sent to Parent #"+_parentCaseId;
+  }
+
+  /* ── submit ── */
+  function submit(){
+    var note=document.getElementById("otr-note").value.trim();
+    var title=document.getElementById("otr-title").value.trim();
+    var msg=document.getElementById("otr-msg");
+    var btn=document.getElementById("otr-submit");
+    if(!note){ msg.textContent="Reply text is required."; return; }
+    btn.disabled=true;
+    var cid=getCid();
+    var csrf=getCsrf();
+
+    /* Step 1: save each new observable as a local child artifact (tagged synced-to-parent) */
+    msg.textContent=_newObs.length>0?"Saving "+_newObs.length+" new observable(s)...":"Creating artifact...";
+    var savePromises=_newObs.map(function(obs){
+      var sdi="ot_new_obs_"+cid+"_"+obs.name.replace(/[^a-zA-Z0-9]/g,"_").slice(0,40);
+      return fetch("/rest/artifact",{
+        method:"POST", credentials:"same-origin",
+        headers:{"Content-Type":"application/json","X-CSRFToken":csrf,"X-Requested-With":"XMLHttpRequest"},
+        body:JSON.stringify({
+          container_id:           cid,
+          label:                  "artifact",
+          name:                   obs.name,
+          type:                   obs.type||"network",
+          source_data_identifier: sdi,
+          cef:                    obs.cef,
+          tags:                   ["synced-to-parent"],
+          run_automation:         false
+        })
+      }).then(function(r){ return r.json(); });
+    });
+
+    Promise.all(savePromises).then(function(results){
+      /* collect IDs of newly created local artifacts */
+      var newIds=results.filter(function(d){ return d.id; }).map(function(d){ return String(d.id); });
+      var allSelectedIds=_selectedIds.concat(newIds);
+      msg.textContent="Creating reply artifact...";
+      var cef={
+        parentCaseId:        String(_parentCaseId),
+        noteContent:         note,
+        selectedArtifactIds: allSelectedIds.join(","),
+        newObservables:      JSON.stringify(_newObs)
+      };
+      if(title) cef.noteTitle=title;
+      /* Artifact name includes subject if provided */
+      var artName = title ? "Reply to Parent: "+title : "Reply to Parent #"+_parentCaseId;
+      return fetch("/rest/artifact",{
+        method:"POST", credentials:"same-origin",
+        headers:{"Content-Type":"application/json","X-CSRFToken":csrf,"X-Requested-With":"XMLHttpRequest"},
+        body:JSON.stringify({
+          container_id:   cid,
+          label:          "child_reply",
+          name:           artName,
+          type:           "network",
+          cef:            cef,
+          run_automation: true
+        })
+      });
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.id||d.success){
+        msg.style.color="#4caf50";
+        msg.textContent="Artifact #"+d.id+" created — playbook triggered.";
+        setTimeout(function(){
+          hideOverlay(); msg.textContent=""; msg.style.color=""; btn.disabled=false;
+        },2200);
+      } else { msg.textContent="Error: "+JSON.stringify(d); btn.disabled=false; }
+    })
+    .catch(function(e){ msg.textContent=e.message; btn.disabled=false; });
+  }
+
+  /* ── overlay ── */
+  function showOverlay(){ document.getElementById("otr-overlay").style.display="flex"; }
+  function hideOverlay(){ document.getElementById("otr-overlay").style.display="none"; }
+
+  /* ── load artifacts + init ── */
+  function init(){
+    var cid=getCid();
+    if(!cid) return;
+    fetch("/rest/artifact?_filter_container_id="+cid+"&page_size=100",{credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var arts=data.data||[];
+      /* Find Parent Case Reference */
+      var ref=null;
+      for(var i=0;i<arts.length;i++){
+        if(arts[i].name==="Parent Case Reference"){ ref=arts[i]; break; }
+      }
+      if(!ref||!ref.cef||!ref.cef.parent_case_id){
+        /* Not a child container — do not inject button */
+        return;
+      }
+      _parentCaseId=ref.cef.parent_case_id;
+
+      /* Filter artifacts for selection: exclude meta-artifacts + already synced
+         + artifacts that originated from the parent (tagged from-parent) */
+      var SKIP_LABELS={"child_task_request":1,"child_reply":1,"child_reply_received":1};
+      _allArtifacts=arts.filter(function(a){
+        if(a.name==="Parent Case Reference") return false;
+        if(SKIP_LABELS[a.label]) return false;
+        if((a.tags||[]).indexOf("synced-to-parent")>=0) return false;
+        if((a.tags||[]).indexOf("reply-sent")>=0) return false;
+        if((a.tags||[]).indexOf("from-parent")>=0) return false;
+        return true;
+      });
+
+      injectToolbarBtn();
+    })
+    .catch(function(){
+      /* silently fail — parent instance or network error */
+    });
+  }
+
+  /* ── toolbar button ── */
+  function injectToolbarBtn(){
+    if(document.getElementById("otr-tb-btn")) return;
+    var btn=document.createElement("button");
+    btn.id="otr-tb-btn"; btn.textContent="↩ Reply to Parent";
+    btn.title="Send reply to parent — OneTicketing Sync";
+    btn.onclick=function(){
+      /* populate list fresh each time modal opens */
+      var loading=document.getElementById("otr-loading");
+      var section=document.getElementById("otr-obs-section");
+      var noObs=document.getElementById("otr-no-obs");
+      var addSec=document.getElementById("otr-add-section");
+      loading.style.display="block"; section.style.display="none";
+      noObs.style.display="none"; addSec.style.display="none";
+      /* reset new observable rows */
+      document.getElementById("otr-new-obs").innerHTML="";
+      /* reset to step 1 */
+      document.getElementById("otr-step1").style.display="block";
+      document.getElementById("otr-step2").style.display="none";
+      document.getElementById("otr-step-ind").textContent="Step 1 of 2 — Select observables";
+      showOverlay();
+      /* render artifact list, then always show add-section */
+      if(_allArtifacts.length===0){
+        loading.style.display="none"; noObs.style.display="block";
+      } else {
+        loading.style.display="none"; section.style.display="block";
+        renderObsList();
+      }
+      addSec.style.display="block";
+    };
+    var inserted=false;
+    var btns=document.querySelectorAll("button,[role='button']");
+    for(var i=0;i<btns.length&&!inserted;i++){
+      var t=btns[i].textContent.trim();
+      if(t==="Summary"||t==="Analyst"||t==="+ Child Task"){
+        var par=btns[i].parentNode;
+        for(var k=0;k<5&&par&&par!==document.body;k++){
+          if(par.children.length>=2){ par.appendChild(btn); inserted=true; break; }
+          par=par.parentNode;
+        }
+      }
+    }
+    if(!inserted){
+      btn.style.cssText="position:fixed;bottom:72px;right:28px;z-index:99999;"+
+        "padding:10px 18px;border-radius:28px;background:#2a7a3a;color:#fff;border:none;"+
+        "cursor:pointer;font-size:13px;font-weight:600;box-shadow:0 4px 14px rgba(42,122,58,.7);";
+      document.body.appendChild(btn);
+    }
+  }
+
+  /* ── wire controls ── */
+  document.getElementById("otr-cancel1").onclick = hideOverlay;
+  document.getElementById("otr-overlay").onclick  = function(e){ if(e.target===this) hideOverlay(); };
+  document.getElementById("otr-skip1").onclick    = function(){ goStep2(true); };
+  document.getElementById("otr-next1").onclick    = function(){ goStep2(false); };
+  document.getElementById("otr-back2").onclick    = goStep1;
+  document.getElementById("otr-add-obs").onclick  = function(e){ e.preventDefault(); addNewObsRow(); };
+  document.getElementById("otr-submit").onclick   = submit;
+  document.getElementById("otr-all").onchange     = function(){
+    document.querySelectorAll("#otr-obs-list input[type=checkbox]").forEach(function(cb){ cb.checked=this.checked; }.bind(this));
+    updateSelCount();
+  };
+  document.getElementById("otr-obs-filter").oninput = renderObsList;
+
+  /* ── start ── */
+  init();
+})();
+</script>
+</div></div></div></div>

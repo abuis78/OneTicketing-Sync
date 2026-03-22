@@ -1,0 +1,536 @@
+{% comment %}
+  one_ticketing_view.html
+  Custom Investigation panel widget for OneTicketing Sync app.
+  Renders two sections:
+    1. Children Status Dashboard (display_get_children_status)
+    2. Parent Connectivity Card (display_check_parent_connectivity)
+{% endcomment %}
+
+<style>
+  .ot-widget {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    color: #1a1a1a;
+    padding: 12px;
+  }
+  .ot-section-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #003831;
+    border-bottom: 3px solid #00b388;
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+  }
+  /* ── Summary Cards ─────────────────────────────────────────── */
+  .ot-summary-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .ot-summary-card {
+    flex: 1 1 80px;
+    background: #f5f5f5;
+    border-radius: 6px;
+    padding: 8px 10px;
+    text-align: center;
+    border-top: 3px solid #00b388;
+    min-width: 70px;
+  }
+  .ot-summary-card .ot-count {
+    font-size: 22px;
+    font-weight: bold;
+    color: #003831;
+  }
+  .ot-summary-card .ot-label {
+    font-size: 11px;
+    color: #555;
+    margin-top: 2px;
+  }
+  .ot-summary-card.warn  { border-top-color: #fd7e14; }
+  .ot-summary-card.alert { border-top-color: #dc3545; }
+  .ot-summary-card.ok    { border-top-color: #28a745; }
+
+  /* ── Children Table ─────────────────────────────────────────── */
+  .ot-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+  }
+  .ot-table th {
+    background: #003831;
+    color: #fff;
+    padding: 7px 10px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  .ot-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #e0e0e0;
+    vertical-align: middle;
+  }
+  .ot-table tr:nth-child(even) td {
+    background: #f9f9f9;
+  }
+  .ot-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #fff;
+  }
+  .ot-badge-new        { background: #6c757d; }
+  .ot-badge-open       { background: #1f6bb5; }
+  .ot-badge-closed     { background: #28a745; }
+  .ot-badge-unknown    { background: #aaa; color: #333; }
+
+  /* ── Connectivity Card ──────────────────────────────────────── */
+  .ot-conn-card {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 14px;
+    border: 1px solid #e0e0e0;
+  }
+  .ot-conn-card.success { border-left: 6px solid #28a745; background: #f0fff4; }
+  .ot-conn-card.danger  { border-left: 6px solid #dc3545; background: #fff5f5; }
+  .ot-conn-header {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  .ot-conn-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+  }
+  .ot-conn-item {
+    background: rgba(255,255,255,0.7);
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+  .ot-conn-item .ot-ci-label {
+    font-size: 11px;
+    color: #555;
+    margin-bottom: 3px;
+  }
+  .ot-conn-item .ot-ci-value {
+    font-size: 14px;
+    font-weight: bold;
+  }
+  .ot-text-success { color: #28a745; }
+  .ot-text-warning { color: #fd7e14; }
+  .ot-text-danger  { color: #dc3545; }
+  .ot-text-muted   { color: #6c757d; }
+
+  .ot-no-data {
+    text-align: center;
+    color: #888;
+    padding: 20px;
+    font-style: italic;
+  }
+
+  /* ── Last updated bar (v1.4.5) ──────────────────────────── */
+  .ot-updated-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f0f4f8;
+    border: 1px solid #d0dce8;
+    border-radius: 5px;
+    padding: 6px 12px;
+    margin-bottom: 14px;
+    font-size: 11px;
+    color: #555;
+  }
+  .ot-updated-bar .ot-upd-icon { font-size: 14px; }
+  .ot-updated-bar strong { color: #222; }
+
+  /* ── TLP badges (v1.4.4) ─────────────────────────────────── */
+  .ot-tlp-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .3px;
+  }
+  .ot-tlp-white  { background: #ddd; color: #333; }
+  .ot-tlp-green  { background: #1a5c1a; color: #7aff7a; }
+  .ot-tlp-amber  { background: #5c3a00; color: #ffcc44; }
+  .ot-tlp-red    { background: #5c0000; color: #ff6666; }
+  .ot-tlp-unknown { background: #e0e0e0; color: #777; }
+
+  /* ── TLP escalation warning ─────────────────────────────── */
+  .ot-tlp-esc-row {
+    background: #fff8e1 !important;
+  }
+  .ot-tlp-esc-row td {
+    background: #fff8e1 !important;
+  }
+  .ot-esc-badge {
+    display: inline-block;
+    background: #ff6d00;
+    color: #fff;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+  .ot-child-link {
+    color: #1f6bb5;
+    text-decoration: none;
+    font-size: 12px;
+  }
+  .ot-child-link:hover { text-decoration: underline; }
+</style>
+
+<div class="no-padding fill-space"><div class="grid fill-space"><div class="grid-body widget-body no-border fill-space"><div class="scoller scrollbar-hidden">
+<div class="ot-widget">
+
+  {# ── CHILDREN STATUS SECTION ───────────────────────────────────── #}
+  {% if results %}
+    {% for result in results %}
+      <div class="ot-section-title">🌐 OneTicketing — Children Status</div>
+
+      {# Last updated bar #}
+      {% if result.retrieved_at %}
+      <div class="ot-updated-bar">
+        <span class="ot-upd-icon">🕐</span>
+        <span>Zuletzt aktualisiert: <strong>{{ result.retrieved_at|truncatechars:25 }}</strong></span>
+        <span style="margin-left:auto; color:#888;">{{ result.summary.total }} Child(s) abgefragt</span>
+      </div>
+      {% endif %}
+
+      {# Summary row #}
+      {% with s=result.summary %}
+      <div class="ot-summary-row">
+        <div class="ot-summary-card">
+          <div class="ot-count">{{ s.total }}</div>
+          <div class="ot-label">Total Children</div>
+        </div>
+        <div class="ot-summary-card ok">
+          <div class="ot-count">{{ s.reachable }}</div>
+          <div class="ot-label">Reachable</div>
+        </div>
+        <div class="ot-summary-card {% if s.unreachable > 0 %}alert{% endif %}">
+          <div class="ot-count">{{ s.unreachable }}</div>
+          <div class="ot-label">Unreachable</div>
+        </div>
+        <div class="ot-summary-card">
+          <div class="ot-count">{{ s.new }}</div>
+          <div class="ot-label">New</div>
+        </div>
+        <div class="ot-summary-card warn">
+          <div class="ot-count">{{ s.open }}</div>
+          <div class="ot-label">Open</div>
+        </div>
+        <div class="ot-summary-card ok">
+          <div class="ot-count">{{ s.closed }}</div>
+          <div class="ot-label">Closed</div>
+        </div>
+      </div>
+      {% endwith %}
+
+      {# Children table #}
+      {% if result.children %}
+        <table class="ot-table">
+          <thead>
+            <tr>
+              <th>Child Instance</th>
+              <th>Case</th>
+              <th>Status</th>
+              <th>Severity</th>
+              <th>TLP</th>
+              <th>Assigned</th>
+              <th>Artifacts</th>
+              <th>Last Sync</th>
+              <th>Online</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for child in result.children %}
+            <tr {% if child.tlp_escalated %}class="ot-tlp-esc-row"{% endif %}>
+              <td>
+                <strong>{{ child.child_id }}</strong>
+                {% if child.tlp_escalated %}
+                  <span class="ot-esc-badge">⚠ TLP↑</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if child.child_url %}
+                  <a class="ot-child-link" href="{{ child.child_url }}" target="_blank">
+                    {% if child.case_title %}{{ child.case_title|truncatechars:28 }}{% else %}#{{ child.child_case_id|default:"—" }}{% endif %}
+                  </a>
+                  <div style="font-size:10px;color:#888;">#{{ child.child_case_id|default:"" }}</div>
+                {% else %}
+                  {% if child.case_title %}{{ child.case_title|truncatechars:28 }}{% else %}<code>{{ child.child_case_id|default:"—" }}</code>{% endif %}
+                {% endif %}
+              </td>
+              <td>
+                <span class="ot-badge ot-badge-{{ child.status }}">
+                  {{ child.status|upper }}
+                </span>
+              </td>
+              <td>
+                <span style="color:{{ child.sev_colour }}; font-weight:bold;">
+                  {{ child.severity|upper }}
+                </span>
+              </td>
+              <td>
+                {% if child.tlp %}
+                  <span class="ot-tlp-badge ot-tlp-{{ child.tlp_key }}">
+                    {{ child.tlp }}
+                  </span>
+                {% else %}
+                  <span class="ot-tlp-badge ot-tlp-unknown">—</span>
+                {% endif %}
+              </td>
+              <td style="font-size:11px; color:#555;">{{ child.assigned_user|default:"—" }}</td>
+              <td style="text-align:center;">{{ child.artifact_count|default:"0" }}</td>
+              <td style="font-size:11px; color:#555;">{{ child.last_sync|truncatechars:22 }}</td>
+              <td style="font-size:16px; text-align:center;">{{ child.reachable_icon }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="ot-no-data">No child data available yet.</div>
+      {% endif %}
+
+    {% endfor %}
+  {% endif %}
+
+  {# ── CONNECTIVITY SECTION ──────────────────────────────────────── #}
+  {% if connectivity %}
+    {% for conn in connectivity %}
+      <div class="ot-section-title">📡 Parent Connectivity</div>
+      <div class="ot-conn-card {{ conn.status_class }}">
+        <div class="ot-conn-header">
+          {{ conn.status_icon }} Parent is {{ conn.status_label }}
+        </div>
+        <div class="ot-conn-grid">
+          <div class="ot-conn-item">
+            <div class="ot-ci-label">Latency</div>
+            <div class="ot-ci-value ot-text-{{ conn.latency_class }}">
+              {{ conn.latency_label }}
+            </div>
+          </div>
+          <div class="ot-conn-item">
+            <div class="ot-ci-label">Queue Depth</div>
+            <div class="ot-ci-value ot-text-{{ conn.queue_class }}">
+              {{ conn.queue_depth }} items
+            </div>
+          </div>
+          <div class="ot-conn-item">
+            <div class="ot-ci-label">Last Sync</div>
+            <div class="ot-ci-value ot-text-muted" style="font-size:11px;">
+              {{ conn.last_sync|truncatechars:30 }}
+            </div>
+          </div>
+          <div class="ot-conn-item">
+            <div class="ot-ci-label">Checked At</div>
+            <div class="ot-ci-value ot-text-muted" style="font-size:11px;">
+              {{ conn.checked_at|truncatechars:30 }}
+            </div>
+          </div>
+        </div>
+        {% if conn.queue_depth > 0 %}
+        <div style="margin-top:10px; padding:8px; background:rgba(253,126,20,0.1);
+                    border-radius:4px; color:#cc5500; font-size:12px;">
+          ⚠️ {{ conn.queue_depth }} sync request(s) queued locally.
+          Run <strong>flush sync queue</strong> after connectivity is restored.
+        </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {# Fallback if no data at all #}
+  {% if not results and not connectivity %}
+    <div class="ot-no-data">
+      No OneTicketing widget data available. Run an action first.
+    </div>
+  {% endif %}
+
+</div>
+</div></div></div></div>{# /scoller /widget-body /grid /fill-space #}
+
+{# ── Re-inject "+ Create Child Task" toolbar button (v1.4.8) ─────────────── #}
+{# When this view is active the create_child_task widget JS is not running,   #}
+{# so we re-inject the button here with the same styling + click handler.     #}
+<script>
+(function(){
+  "use strict";
+  var BUTTON_ID = "ot-tb-btn";
+  if (document.getElementById(BUTTON_ID)) return;   // already injected
+
+  var btn = document.createElement("button");
+  btn.id          = BUTTON_ID;
+  btn.textContent = "+ Create Child Task";
+  btn.style.cssText = [
+    "background:#005a8e!important","color:#fff!important",
+    "border:none!important","padding:5px 13px!important",
+    "border-radius:4px!important","cursor:pointer!important",
+    "font-size:12px!important","font-weight:600!important",
+    "white-space:nowrap!important","margin:0 6px!important",
+    "vertical-align:middle!important"
+  ].join(";");
+
+  btn.addEventListener("mouseenter", function(){ this.style.background="#003f6b"; });
+  btn.addEventListener("mouseleave", function(){ this.style.background="#005a8e"; });
+
+  btn.addEventListener("click", function(){
+    // Navigate to the Analyst view so the create_child_task widget is active.
+    // The widget toolbar button is injected by create_child_task.html JS.
+    // Clicking this button just ensures the user lands back on the right view.
+    var m = window.location.pathname.match(/\/mission\/(\d+)/);
+    var cid = m ? m[1] : null;
+    if (!cid) { alert("Cannot determine Case ID from URL."); return; }
+
+    // Build a lightweight modal inline (no dependency on create_child_task.html)
+    var overlay = document.getElementById("ot-mini-overlay");
+    if (!overlay) {
+      overlay = _buildMiniOverlay(cid);
+      document.body.appendChild(overlay);
+    }
+    overlay.style.display = "flex";
+  });
+
+  // Inject into toolbar
+  function tryInject() {
+    var selectors = [
+      ".phf-investigation-bar",
+      ".phf-button-bar",
+      ".investigation-action-bar",
+      ".analyst-action-bar",
+      "[class*='button-bar']",
+      "[class*='action-bar']",
+      ".page-title-actions",
+      ".phf-case-actions",
+    ];
+    for (var i = 0; i < selectors.length; i++) {
+      var bar = document.querySelector(selectors[i]);
+      if (bar) { bar.insertBefore(btn, bar.firstChild); return true; }
+    }
+    return false;
+  }
+
+  if (!tryInject()) {
+    var retries = 0;
+    var iv = setInterval(function(){
+      if (tryInject() || ++retries > 20) clearInterval(iv);
+    }, 300);
+  }
+
+  /* ── Minimal "Create Child Task" modal (view-side, no step wizard) ── */
+  function escHtml(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  function _buildMiniOverlay(cid){
+    var ov = document.createElement("div");
+    ov.id = "ot-mini-overlay";
+    ov.style.cssText = "display:none;position:fixed;top:0;left:0;width:100%;height:100%;" +
+      "background:rgba(0,0,0,.6);z-index:99999;align-items:center;justify-content:center";
+
+    ov.innerHTML = [
+      '<div id="ot-mini-modal" style="background:#1e2126;color:#ccd;border-radius:8px;',
+      'padding:24px;width:520px;max-height:90vh;overflow-y:auto;',
+      'box-shadow:0 8px 32px rgba(0,0,0,.7)">',
+      '<h3 style="margin:0 0 16px;color:#fff;font-size:15px">+ Create Child Task</h3>',
+
+      '<label style="display:block;font-size:11px;color:#999;margin:8px 0 3px">Child ID *</label>',
+      '<input id="ot-mn-child" type="text" placeholder="e.g. DE_OT" style="width:100%;box-sizing:border-box;',
+      'background:#2a2f3a;border:1px solid #444;color:#eee;padding:5px 8px;border-radius:4px;font-size:13px">',
+
+      '<label style="display:block;font-size:11px;color:#999;margin:8px 0 3px">Task Title *</label>',
+      '<input id="ot-mn-title" type="text" placeholder="Short task title" style="width:100%;box-sizing:border-box;',
+      'background:#2a2f3a;border:1px solid #444;color:#eee;padding:5px 8px;border-radius:4px;font-size:13px">',
+
+      '<label style="display:block;font-size:11px;color:#999;margin:8px 0 3px">Description *</label>',
+      '<textarea id="ot-mn-desc" placeholder="Context for the child CERT..." style="width:100%;box-sizing:border-box;',
+      'background:#2a2f3a;border:1px solid #444;color:#eee;padding:5px 8px;border-radius:4px;',
+      'font-size:13px;height:70px;resize:vertical"></textarea>',
+
+      '<label style="display:block;font-size:11px;color:#999;margin:8px 0 3px">Severity</label>',
+      '<select id="ot-mn-sev" style="width:100%;box-sizing:border-box;background:#2a2f3a;border:1px solid #444;',
+      'color:#eee;padding:5px 8px;border-radius:4px;font-size:13px">',
+      '<option value="low">Low</option><option value="medium" selected>Medium</option>',
+      '<option value="high">High</option><option value="critical">Critical</option></select>',
+
+      '<label style="display:block;font-size:11px;color:#999;margin:8px 0 3px">TLP</label>',
+      '<div style="display:flex;gap:6px;margin-top:4px">',
+        '<span class="ot-mn-tlp" data-tlp="TLP.WHITE" style="padding:3px 11px;border-radius:3px;cursor:pointer;font-size:11px;font-weight:700;background:#444;color:#ddd;opacity:.5;border:2px solid transparent">WHITE</span>',
+        '<span class="ot-mn-tlp" data-tlp="TLP.GREEN" style="padding:3px 11px;border-radius:3px;cursor:pointer;font-size:11px;font-weight:700;background:#1a3a1a;color:#5ccc5c;opacity:.5;border:2px solid transparent">GREEN</span>',
+        '<span class="ot-mn-tlp ot-mn-tlp-sel" data-tlp="TLP.AMBER" style="padding:3px 11px;border-radius:3px;cursor:pointer;font-size:11px;font-weight:700;background:#3a2a00;color:#ffb300;opacity:1;border:2px solid #ffb300">AMBER</span>',
+        '<span class="ot-mn-tlp" data-tlp="TLP.RED" style="padding:3px 11px;border-radius:3px;cursor:pointer;font-size:11px;font-weight:700;background:#3a0000;color:#ff4444;opacity:.5;border:2px solid transparent">RED</span>',
+      '</div>',
+      '<input type="hidden" id="ot-mn-tlp-val" value="TLP.AMBER">',
+
+      '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">',
+      '<button id="ot-mn-cancel" style="background:#444;color:#eee;border:none;padding:7px 18px;border-radius:4px;cursor:pointer">Cancel</button>',
+      '<button id="ot-mn-submit" style="background:#005a8e;color:#fff;border:none;padding:7px 18px;border-radius:4px;cursor:pointer">Dispatch Task</button>',
+      '</div>',
+      '<div id="ot-mn-status" style="margin-top:10px;font-size:12px;min-height:16px"></div>',
+      '</div>'
+    ].join("");
+
+    // TLP selector
+    ov.querySelectorAll(".ot-mn-tlp").forEach(function(el){
+      el.addEventListener("click", function(){
+        ov.querySelectorAll(".ot-mn-tlp").forEach(function(x){
+          x.style.opacity = ".5"; x.style.borderColor = "transparent";
+        });
+        this.style.opacity = "1";
+        var col = this.getAttribute("data-tlp").replace("TLP.","").toLowerCase();
+        var colors = {white:"#ccc",green:"#5ccc5c",amber:"#ffb300",red:"#ff4444"};
+        this.style.borderColor = colors[col] || "#888";
+        ov.querySelector("#ot-mn-tlp-val").value = this.getAttribute("data-tlp");
+      });
+    });
+
+    ov.querySelector("#ot-mn-cancel").addEventListener("click", function(){ ov.style.display="none"; });
+
+    ov.querySelector("#ot-mn-submit").addEventListener("click", function(){
+      var child = ov.querySelector("#ot-mn-child").value.trim();
+      var title = ov.querySelector("#ot-mn-title").value.trim();
+      var desc  = ov.querySelector("#ot-mn-desc").value.trim();
+      var sev   = ov.querySelector("#ot-mn-sev").value;
+      var tlp   = ov.querySelector("#ot-mn-tlp-val").value || "TLP.AMBER";
+      var st    = ov.querySelector("#ot-mn-status");
+      if (!child || !title || !desc) { st.textContent = "Child ID, Title and Description are required."; return; }
+      var submitBtn = ov.querySelector("#ot-mn-submit");
+      submitBtn.disabled = true; st.textContent = "Dispatching...";
+
+      var csrf = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || "";
+      fetch("/rest/artifact", {
+        method: "POST", credentials: "same-origin",
+        headers: {"Content-Type":"application/json","X-CSRFToken":csrf,"X-Requested-With":"XMLHttpRequest"},
+        body: JSON.stringify({
+          container_id: parseInt(cid, 10),
+          label: "child_task_request",
+          name: "Child Task [" + child + "]: " + title,
+          type: "network",
+          run_automation: true,
+          cef: {
+            targetChildId: child, taskTitle: title, taskDescription: desc,
+            severity: sev, tlp: tlp, parentCaseId: String(cid)
+          }
+        })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d.id || d.success) {
+          st.style.color = "#4caf50"; st.textContent = "Task dispatched!";
+          setTimeout(function(){ ov.style.display = "none"; st.textContent = ""; st.style.color = ""; submitBtn.disabled = false; }, 2000);
+        } else { st.textContent = "Error: " + JSON.stringify(d); submitBtn.disabled = false; }
+      })
+      .catch(function(e){ st.textContent = e.message; submitBtn.disabled = false; });
+    });
+
+    return ov;
+  }
+})();
+</script>

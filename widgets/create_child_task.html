@@ -1,0 +1,1775 @@
+<div class="no-padding fill-space"><div class="grid fill-space"><div class="grid-body widget-body no-border fill-space"><div class="scoller scrollbar-hidden">
+<style>
+/* ── OneTicketing Parent Widget v1.6.0 ── */
+#ot-tb-btn{background:#005a8e!important;color:#fff!important;border:none!important;padding:5px 13px!important;border-radius:4px!important;cursor:pointer!important;font-size:12px!important;font-weight:600!important;white-space:nowrap!important;margin:0 6px!important;vertical-align:middle!important}
+#ot-tb-btn:hover{background:#003f6b!important}
+#ot-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:99999;align-items:center;justify-content:center}
+#ot-modal{background:#1e2126;color:#ccd;border-radius:8px;padding:24px;width:580px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.7)}
+#ot-modal h3{margin:0 0 4px;color:#fff;font-size:15px}
+#ot-step-ind{font-size:11px;color:#888;margin-bottom:16px;display:block}
+#ot-modal label{display:block;font-size:11px;color:#999;margin:10px 0 3px}
+#ot-modal input[type=text],#ot-modal input[type=date],#ot-modal textarea,#ot-modal select{width:100%;box-sizing:border-box;background:#2a2f3a;border:1px solid #444;color:#eee;padding:5px 8px;border-radius:4px;font-size:13px}
+#ot-modal textarea{height:80px;resize:vertical}
+/* ── Observable list (Step 1) ── */
+#ot-obs-loading{color:#888;font-size:12px;padding:6px 0}
+#ot-obs-filter-input{margin-bottom:6px}
+#ot-all-wrap{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;font-size:11px;color:#888}
+#ot-sel-count{font-size:11px;color:#888}
+#ot-obs-scroll{max-height:200px;overflow-y:auto;border:1px solid #333;border-radius:4px;padding:6px}
+#ot-obs-scroll::-webkit-scrollbar{width:6px}
+#ot-obs-scroll::-webkit-scrollbar-thumb{background:#444;border-radius:3px}
+.ot-obs-cb-row{display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid #2a2f3a;font-size:12px}
+.ot-obs-cb-row:last-child{border-bottom:none}
+.ot-obs-cb-row input[type=checkbox]{flex:0 0 16px;cursor:pointer}
+.ot-type-badge{flex:0 0 52px;font-size:10px;padding:2px 5px;border-radius:3px;text-align:center;font-weight:600}
+.ot-type-ip{background:#5a1a1a;color:#ff8888}
+.ot-type-domain{background:#1a3a5a;color:#88aaff}
+.ot-type-hash{background:#2a2a1a;color:#ffcc44}
+.ot-type-email{background:#1a2a1a;color:#88cc88}
+.ot-type-other{background:#2a2a2a;color:#aaa}
+.ot-obs-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#ccd}
+.ot-obs-val{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#888;font-size:11px}
+#ot-no-obs{color:#888;font-size:12px;padding:4px 0}
+.ot-new-row{display:flex;gap:6px;align-items:center;margin-bottom:5px}
+.ot-new-row select{flex:0 0 175px;background:#2a2f3a;border:1px solid #444;color:#eee;padding:4px 6px;border-radius:4px;font-size:12px}
+.ot-new-row input{flex:1;background:#2a2f3a;border:1px solid #444;color:#eee;padding:4px 6px;border-radius:4px;font-size:12px}
+.ot-rm{background:#555;color:#fff;border:none;padding:3px 7px;border-radius:3px;cursor:pointer;font-size:11px}
+#ot-add-obs-btn{background:#2a3a2a;color:#8c8;border:1px solid #3a5a3a;padding:4px 12px;border-radius:3px;cursor:pointer;font-size:12px;margin-top:6px}
+/* ── Child multi-select (Step 2) ── */
+#ot-child-loading{font-size:11px;color:#888;padding:4px 0}
+#ot-child-list{border:1px solid #333;border-radius:4px;padding:6px;max-height:140px;overflow-y:auto;margin-bottom:6px}
+#ot-child-list:empty{display:none}
+#ot-child-list::-webkit-scrollbar{width:6px}
+#ot-child-list::-webkit-scrollbar-thumb{background:#444;border-radius:3px}
+.ot-child-row{display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid #2a2f3a;font-size:13px;cursor:pointer}
+.ot-child-row:last-child{border-bottom:none}
+.ot-child-row:hover{background:#22272e}
+.ot-child-row input[type=checkbox]{flex:0 0 16px;cursor:pointer}
+.ot-child-label{flex:1;color:#ccd;font-weight:500}
+.ot-child-src{font-size:10px;color:#555;margin-left:4px}
+#ot-child-add-row{display:flex;gap:6px;margin-top:4px}
+#ot-child-custom{flex:1;background:#2a2f3a;border:1px solid #444;color:#eee;padding:4px 8px;border-radius:4px;font-size:12px}
+#ot-child-add-btn{background:#1a3a5a;color:#88aaff;border:1px solid #2a4a7a;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;white-space:nowrap}
+#ot-child-none{color:#888;font-size:12px;padding:4px 0}
+/* ── Footer / misc ── */
+#ot-preview{font-size:11px;color:#888;margin-top:10px;min-height:14px}
+.ot-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.ot-btn-sec{background:#333;color:#ccd;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-size:12px}
+.ot-btn-pri{background:#005a8e;color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:600}
+.ot-btn-pri:disabled{opacity:.5;cursor:not-allowed}
+#ot-msg{margin-top:8px;font-size:12px;min-height:14px}
+/* ── Reply table ── */
+#ot-reply-section{display:none;margin-bottom:12px}
+#ot-reply-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+#ot-reply-header-title{color:#6dbf6d;font-weight:600;font-size:13px}
+#ot-reply-toggle{color:#888;cursor:pointer;font-size:11px;user-select:none;padding:2px 6px;border:1px solid #333;border-radius:3px;background:#252a30}
+#ot-reply-table-wrap{overflow-x:auto}
+#ot-reply-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:4px}
+#ot-reply-table th{background:#252a35;color:#999;padding:5px 8px;text-align:left;border-bottom:1px solid #333;white-space:nowrap}
+#ot-reply-table td{padding:5px 8px;border-bottom:1px solid #222;color:#ccd;vertical-align:top}
+#ot-reply-table tr:last-child td{border-bottom:none}
+#ot-reply-table tr:hover td{background:#22272e}
+.ot-note-preview{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#aaa}
+.ot-obs-badge{display:inline-block;background:#1a3050;color:#88aaff;border-radius:3px;padding:1px 6px;font-size:10px;font-weight:600}
+.ot-view-btn{background:#1a3a5a;color:#88aaff;border:1px solid #2a4a7a;border-radius:3px;padding:2px 8px;cursor:pointer;font-size:11px;white-space:nowrap}
+.ot-view-btn:hover{background:#2a4a7a}
+/* ── TLP selector ── */
+.ot-tlp-row{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}
+.ot-tlp-opt{padding:3px 11px;border-radius:3px;cursor:pointer;font-size:11px;font-weight:700;border:2px solid transparent;opacity:.5;transition:opacity .15s,border-color .15s;user-select:none}
+.ot-tlp-opt.selected{opacity:1}
+.ot-tlp-white{background:#444;color:#ddd}.ot-tlp-white.selected{border-color:#ccc}
+.ot-tlp-green{background:#1a3a1a;color:#5ccc5c}.ot-tlp-green.selected{border-color:#5ccc5c}
+.ot-tlp-amber{background:#3a2a00;color:#ffb300}.ot-tlp-amber.selected{border-color:#ffb300}
+.ot-tlp-red{background:#3a0000;color:#ff4444}.ot-tlp-red.selected{border-color:#ff4444}
+/* ── Existing children table ── */
+#ot-active-wrap{display:none;margin-bottom:12px}
+#ot-active-wrap h4{color:#777;font-size:10px;margin:0 0 5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px}
+#ot-active-table{width:100%;border-collapse:collapse;font-size:11px}
+#ot-active-table th{background:#1b2030;color:#666;padding:4px 7px;text-align:left;border-bottom:1px solid #2a2f3a}
+#ot-active-table td{padding:4px 7px;border-bottom:1px solid #1b2030;color:#99aabb;vertical-align:middle}
+#ot-active-table tr:last-child td{border-bottom:none}
+#ot-active-table a{color:#6ab3ff;text-decoration:none}#ot-active-table a:hover{text-decoration:underline}
+.ot-tlp-pill{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700}
+.ot-tlp-pill-white{background:#444;color:#ddd}.ot-tlp-pill-green{background:#1a3a1a;color:#5ccc5c}
+.ot-tlp-pill-amber{background:#3a2a00;color:#ffb300}.ot-tlp-pill-red{background:#3a0000;color:#ff4444}
+.ot-tlp-pill-unknown{background:#222;color:#666}
+/* ── Note modal ── */
+#ot-note-modal{background:#1e2126;color:#ccd;border-radius:8px;padding:24px;width:520px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.9)}
+#ot-note-modal h4{margin:0 0 8px;color:#fff;font-size:14px}
+#ot-note-modal pre{background:#13161b;border:1px solid #333;border-radius:4px;padding:12px;font-size:12px;color:#ccd;white-space:pre-wrap;word-break:break-word;max-height:400px;overflow-y:auto}
+#ot-note-meta{font-size:10px;color:#666;margin-bottom:8px}
+/* ── Active tasks panel ── */
+#ot-tasks-panel{margin:0 0 10px;border:1px solid #2a3040;border-radius:6px;overflow:hidden}
+#ot-tasks-head{display:flex;align-items:center;justify-content:space-between;
+  background:#1b2030;padding:6px 10px;cursor:pointer;user-select:none}
+#ot-tasks-head span{color:#8aa;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+#ot-tasks-head .ot-tk-toggle{color:#555;font-size:11px}
+#ot-tasks-body{padding:6px 0;background:#161b24}
+#ot-tasks-loading{color:#555;font-size:11px;padding:6px 10px}
+#ot-tasks-empty{color:#555;font-size:11px;padding:8px 10px;text-align:center;font-style:italic}
+#ot-tasks-table{width:100%;border-collapse:collapse;font-size:11px}
+#ot-tasks-table th{background:#1b2030;color:#566;padding:4px 8px;text-align:left;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.3px}
+#ot-tasks-table td{padding:4px 8px;border-bottom:1px solid #1b2030;color:#99aabb;vertical-align:middle}
+#ot-tasks-table tr:last-child td{border-bottom:none}
+#ot-tasks-table a{color:#5a9fd4;text-decoration:none}#ot-tasks-table a:hover{text-decoration:underline}
+.ot-tk-status{display:inline-block;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:700;color:#fff}
+.ot-tk-new{background:#1f6bb5}.ot-tk-open{background:#1f6bb5}.ot-tk-in_progress{background:#e67e22}
+.ot-tk-closed{background:#27ae60}.ot-tk-unknown{background:#555}
+.ot-tk-tlp{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700}
+.ot-tk-tlp-white{background:#444;color:#ddd}.ot-tk-tlp-green{background:#1a3a1a;color:#5ccc5c}
+.ot-tk-tlp-amber{background:#3a2a00;color:#ffb300}.ot-tk-tlp-red{background:#3a0000;color:#ff4444}
+.ot-tk-tlp-unknown{background:#222;color:#666}
+#ot-tasks-footer{display:flex;align-items:center;justify-content:space-between;
+  padding:4px 10px;background:#1b2030;border-top:1px solid #2a3040}
+#ot-tasks-footer span{color:#444;font-size:10px}
+#ot-tasks-refresh{background:none;border:none;color:#5a9fd4;cursor:pointer;font-size:10px;padding:2px 4px}
+#ot-tasks-refresh:hover{color:#8ac4ff}
+
+/* ── Persistent Status Sidebar ── */
+/* Always-visible right-edge tab */
+#ot-sb-tab{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:99982;
+  width:22px;min-height:64px;background:#1b2a40;border-left:2px solid #2a4a7a;
+  border-top:1px solid #2a3a55;border-bottom:1px solid #2a3a55;border-radius:6px 0 0 6px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  cursor:pointer;padding:8px 0;box-shadow:-2px 0 10px rgba(0,0,0,.55);user-select:none}
+#ot-sb-tab:hover{background:#223350;border-color:#3a5a9a}
+#ot-sb-tab-label{writing-mode:vertical-rl;transform:rotate(180deg);color:#6aafff;
+  font-size:8px;font-weight:700;letter-spacing:.9px;text-transform:uppercase}
+#ot-sb-tab-badge{background:#c0392b;color:#fff;border-radius:8px;font-size:9px;
+  font-weight:700;padding:1px 3px;min-width:14px;text-align:center;
+  display:none;line-height:1.3}
+#ot-sidebar{position:fixed;right:22px;top:50%;transform:translateY(-50%);z-index:99980;
+  background:#1a1f2b;border-left:2px solid #2a4a7a;border-top:1px solid #2a3a55;
+  border-bottom:1px solid #2a3a55;border-radius:8px 0 0 8px;width:320px;
+  max-height:88vh;display:none;flex-direction:column;overflow:hidden;
+  box-shadow:-4px 0 20px rgba(0,0,0,.65)}
+#ot-sidebar.ot-sb-visible{display:flex}
+#ot-sb-header{padding:7px 10px;background:#1b2a40;border-bottom:1px solid #2a3a55;
+  display:flex;align-items:center;justify-content:space-between;cursor:pointer;
+  flex-shrink:0;user-select:none}
+#ot-sb-header-label{color:#6aafff;font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.6px}
+#ot-sb-toggle-btn{background:none;border:none;color:#5a9fd4;cursor:pointer;
+  font-size:13px;padding:0 2px;line-height:1}
+#ot-sb-toggle-btn:hover{color:#8ac4ff}
+#ot-sb-sections{flex:1;overflow-y:auto}
+#ot-sb-sections::-webkit-scrollbar{width:4px}
+#ot-sb-sections::-webkit-scrollbar-thumb{background:#2a3a55;border-radius:2px}
+#ot-sb-sections.ot-sb-hidden{display:none}
+.ot-sb-section{padding:7px 10px;border-bottom:1px solid #1e2738}
+.ot-sb-section-title{color:#4a6a8a;font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:5px}
+/* Status mini-table */
+#ot-sb-status-table{width:100%;border-collapse:collapse;font-size:10px}
+#ot-sb-status-table th{color:#334;padding:2px 4px;text-align:left;font-size:9px;
+  text-transform:uppercase;border-bottom:1px solid #1e2738}
+#ot-sb-status-table td{padding:3px 4px;border-bottom:1px solid #1a2030;color:#99aabb;
+  vertical-align:middle}
+#ot-sb-status-table tr:last-child td{border-bottom:none}
+.ot-sb-badge{display:inline-block;padding:1px 5px;border-radius:3px;font-size:9px;
+  font-weight:700;color:#fff}
+.ot-sb-new{background:#1f6bb5}.ot-sb-open{background:#1f6bb5}
+.ot-sb-closed{background:#27ae60}.ot-sb-unknown{background:#555}
+.ot-sb-custom{background:#7a5c00}/* amber — used for custom/non-standard status values */
+/* Active tasks mini */
+.ot-sb-task-row{display:flex;align-items:center;gap:5px;padding:3px 0;
+  border-bottom:1px solid #1a2030}
+.ot-sb-task-row:last-child{border-bottom:none}
+.ot-sb-child-tag{flex:0 0 52px;color:#6dbf6d;font-weight:600;font-size:10px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ot-sb-task-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:#99aabb;font-size:10px}
+.ot-sb-reply-badge{display:inline-block;background:#1a3a2a;color:#6dbf6d;
+  border-radius:10px;padding:1px 8px;font-size:10px;font-weight:700}
+#ot-sb-footer{display:flex;align-items:center;justify-content:space-between;
+  padding:5px 10px;background:#151a24;border-top:1px solid #1e2738;flex-shrink:0}
+#ot-sb-updated{color:#2a3a4a;font-size:9px}
+#ot-sb-refresh{background:none;border:none;color:#5a9fd4;cursor:pointer;
+  font-size:9px;padding:1px 3px}
+#ot-sb-refresh:hover{color:#8ac4ff}
+
+</style>
+
+<!-- ── Widget root ── -->
+<div id="ot-root">
+  <div id="ot-reply-section">
+    <div id="ot-reply-header">
+      <span id="ot-reply-header-title">📨 <span id="ot-rb-count">0</span> Reply received</span>
+      <button id="ot-reply-toggle" type="button">▾ Hide</button>
+    </div>
+    <div id="ot-reply-table-wrap">
+      <table id="ot-reply-table">
+        <thead><tr>
+          <th>Date / Time</th><th>Child</th><th>Subject</th>
+          <th>Note preview</th><th>Observables</th><th>Note</th>
+        </tr></thead>
+        <tbody id="ot-reply-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <!-- ── Active child tasks ── -->
+  <div id="ot-tasks-panel">
+    <div id="ot-tasks-head">
+      <span>📋 Active Child Tasks</span>
+      <span class="ot-tk-toggle">▾</span>
+    </div>
+    <div id="ot-tasks-body">
+      <div id="ot-tasks-loading">Loading...</div>
+      <div id="ot-tasks-empty" style="display:none">No child tasks dispatched yet for this case.</div>
+      <table id="ot-tasks-table" style="display:none">
+        <thead><tr><th>Child</th><th>Task</th><th>TLP</th><th>Dispatched</th></tr></thead>
+        <tbody id="ot-tasks-tbody"></tbody>
+      </table>
+    </div>
+    <div id="ot-tasks-footer">
+      <span id="ot-tasks-ts"></span>
+      <button id="ot-tasks-refresh" title="Refresh">↺ Refresh</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+    <button id="ot-btn">+ Child</button>
+    <!-- Hidden until at least one child has been dispatched for this case -->
+    <button id="ot-upd-inline-btn" style="display:none;background:#1a2a4a;color:#6aafff;border:1px solid #2a4a7a;border-radius:4px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600">↑ Update</button>
+  </div>
+</div>
+
+<!-- ── Task dispatch overlay ── -->
+<div id="ot-overlay">
+<div id="ot-modal">
+  <h3>📋 Create Child Investigation Task</h3>
+  <span id="ot-step-ind">Step 1 of 2 — Select observables</span>
+
+  <!-- ══ Step 1: Observables ══ -->
+  <div id="ot-step1">
+    <div id="ot-obs-loading">Loading observables...</div>
+    <div id="ot-obs-section" style="display:none">
+      <label>Filter observables</label>
+      <input id="ot-obs-filter-input" type="text" placeholder="IP, domain, hash...">
+      <div id="ot-all-wrap">
+        <label style="margin:0;display:flex;align-items:center;gap:5px;cursor:pointer">
+          <input type="checkbox" id="ot-obs-all"> Select all
+        </label>
+        <span id="ot-sel-count">0 selected</span>
+      </div>
+      <div id="ot-obs-scroll"></div>
+    </div>
+    <div id="ot-no-obs" style="display:none">No artifacts in this container yet.</div>
+    <label style="margin-top:12px">Add new observables</label>
+    <div id="ot-new-obs-list"></div>
+    <button id="ot-add-obs-btn" type="button">+ Add observable</button>
+    <div class="ot-foot">
+      <button class="ot-btn-sec" id="ot-cancel1" type="button">Cancel</button>
+      <button class="ot-btn-sec" id="ot-skip1"   type="button">Skip →</button>
+      <button class="ot-btn-pri" id="ot-next1"   type="button">Next →</button>
+    </div>
+  </div>
+
+  <!-- ══ Step 2: Task details ══ -->
+  <div id="ot-step2" style="display:none">
+
+    <!-- ── Existing active child tasks ── -->
+    <div id="ot-active-wrap">
+      <h4>Active child tasks for this case</h4>
+      <table id="ot-active-table">
+        <thead><tr><th>Child</th><th>Case</th><th>Title</th><th>TLP</th></tr></thead>
+        <tbody id="ot-active-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Target children — multi-select checkboxes -->
+    <label>Target Child(ren) * <span style="color:#555;font-weight:normal">(select one or more)</span></label>
+    <div id="ot-child-loading" style="display:none">🔍 Searching for child instances...</div>
+    <div id="ot-child-none"   style="display:none">No known children found — add manually below.</div>
+    <div id="ot-child-list"></div>
+    <div id="ot-child-add-row">
+      <input id="ot-child-custom" type="text" placeholder="Add child ID manually (e.g. CERT_NO_OT)">
+      <button id="ot-child-add-btn" type="button">+ Add</button>
+    </div>
+
+    <label>Task Title *</label>
+    <input id="ot-title" type="text" placeholder="Short title">
+    <label>Description *</label>
+    <textarea id="ot-desc" placeholder="Scope and context for the Child CERT..."></textarea>
+    <label>Severity *</label>
+    <select id="ot-sev">
+      <option value="low">Low</option>
+      <option value="medium" selected>Medium</option>
+      <option value="high">High</option>
+      <option value="critical">Critical</option>
+    </select>
+    <label>TLP</label>
+    <div class="ot-tlp-row">
+      <span class="ot-tlp-opt ot-tlp-white"  data-tlp="TLP.WHITE">WHITE</span>
+      <span class="ot-tlp-opt ot-tlp-green"  data-tlp="TLP.GREEN">GREEN</span>
+      <span class="ot-tlp-opt ot-tlp-amber selected" data-tlp="TLP.AMBER">AMBER</span>
+      <span class="ot-tlp-opt ot-tlp-red"    data-tlp="TLP.RED">RED</span>
+    </div>
+    <input type="hidden" id="ot-tlp-val" value="TLP.AMBER">
+    <label>Due Date (optional)</label>
+    <input id="ot-due" type="date">
+    <div id="ot-preview"></div>
+    <div class="ot-foot">
+      <button class="ot-btn-sec" id="ot-cancel2"  type="button">Cancel</button>
+      <button class="ot-btn-sec" id="ot-back2"    type="button">← Back</button>
+      <button class="ot-btn-pri" id="ot-dispatch" type="button">Dispatch Task</button>
+    </div>
+    <div id="ot-msg"></div>
+  </div>
+</div>
+</div>
+
+<!-- ── Send Update to Child overlay (2-step) ── -->
+<div id="ot-upd-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:99999;align-items:center;justify-content:center">
+<div id="ot-upd-modal" style="background:#111827;border:1px solid #1e3a5a;border-radius:8px;padding:20px 24px;width:560px;max-width:96vw;max-height:92vh;overflow-y:auto;color:#ccd;font-family:monospace;font-size:12px;position:relative">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <h3 style="margin:0;font-size:14px;color:#6aafff">📤 Send Update to Child</h3>
+    <span id="ot-upd-step-ind" style="font-size:10px;color:#4a6a8a">Step 1 of 2</span>
+  </div>
+
+  <!-- ══ Step 1: Target child + message + severity ══ -->
+  <div id="ot-upd-step1">
+    <div style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <label style="display:block;color:#6a8aaa;font-size:10px;margin:0">TARGET CHILD * <span style="color:#445;font-weight:400">(select one or more)</span></label>
+        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:10px;color:#6a8aaa;margin:0">
+          <input type="checkbox" id="ot-upd-child-all"> All
+        </label>
+      </div>
+      <div id="ot-upd-child-list"
+        style="border:1px solid #1e2a40;border-radius:4px;padding:4px;max-height:110px;overflow-y:auto;background:#0a1020"></div>
+      <div id="ot-upd-child-none" style="display:none;color:#555;font-size:10px;padding:4px">
+        No dispatched children found for this case.
+      </div>
+    </div>
+    <div style="margin-bottom:10px">
+      <label style="display:block;color:#6a8aaa;font-size:10px;margin-bottom:3px">MESSAGE / UPDATE</label>
+      <textarea id="ot-upd-comment" rows="3" placeholder="New findings, context, instructions for the child analyst…"
+        style="width:100%;box-sizing:border-box;background:#0d1526;border:1px solid #2a3a55;color:#ccd;padding:6px 8px;border-radius:4px;font-size:11px;resize:vertical"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <div style="flex:1">
+        <label style="display:block;color:#6a8aaa;font-size:10px;margin-bottom:3px">SEVERITY CHANGE</label>
+        <select id="ot-upd-sev" style="width:100%;background:#0d1526;border:1px solid #2a3a55;color:#ccd;padding:5px 7px;border-radius:4px;font-size:11px">
+          <option value="">— no change —</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+      <div style="flex:1">
+        <label style="display:block;color:#6a8aaa;font-size:10px;margin-bottom:3px">NEW DUE DATE</label>
+        <input type="date" id="ot-upd-due"
+          style="width:100%;box-sizing:border-box;background:#0d1526;border:1px solid #2a3a55;color:#ccd;padding:5px 7px;border-radius:4px;font-size:11px">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="ot-btn-pri" id="ot-upd-next1" type="button">Next → Select Observables</button>
+      <button class="ot-btn-sec" id="ot-upd-cancel" type="button">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ══ Step 2: Observables ══ -->
+  <div id="ot-upd-step2" style="display:none">
+    <!-- Section A: existing parent artifacts -->
+    <div style="margin-bottom:12px">
+      <div style="color:#4a8a6a;font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:5px">
+        Existing parent artifacts
+        <span style="color:#445;font-weight:400"> — ✓ = already sent to selected child</span>
+      </div>
+      <div id="ot-upd-arts-loading" style="color:#888;font-size:10px">Loading…</div>
+      <div id="ot-upd-arts-scroll" style="max-height:180px;overflow-y:auto;border:1px solid #1e2a40;border-radius:4px;padding:4px;display:none"></div>
+      <div id="ot-upd-arts-empty" style="display:none;color:#444;font-size:10px">No artifacts in this case.</div>
+    </div>
+
+    <!-- Section B: add new observables -->
+    <div style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <div style="color:#4a6a8a;font-size:10px;font-weight:700;text-transform:uppercase">Add new observables</div>
+        <button id="ot-upd-add-obs" type="button"
+          style="font-size:9px;padding:1px 7px;background:#0d2a1a;color:#6dbf6d;border:1px solid #1a5a3a;border-radius:3px;cursor:pointer">+ Add</button>
+      </div>
+      <div id="ot-upd-obs-list" style="display:flex;flex-direction:column;gap:4px"></div>
+      <div style="color:#334;font-size:9px;margin-top:3px">New observables are sent as new artifacts on the child case</div>
+    </div>
+
+    <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+      <button class="ot-btn-pri" id="ot-upd-send"    type="button">Send Update</button>
+      <button class="ot-btn-sec" id="ot-upd-back2"   type="button">← Back</button>
+      <button class="ot-btn-sec" id="ot-upd-cancel2" type="button">Cancel</button>
+      <span id="ot-upd-msg" style="font-size:11px;margin-left:6px"></span>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ── Note detail overlay ── -->
+<div id="ot-note-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);z-index:100000;align-items:center;justify-content:center">
+<div id="ot-note-modal">
+  <h4 id="ot-note-title">Note</h4>
+  <div id="ot-note-meta"></div>
+  <pre id="ot-note-body">Loading...</pre>
+  <div style="text-align:right;margin-top:12px">
+    <button class="ot-btn-sec" id="ot-note-close" type="button">Close</button>
+  </div>
+</div>
+</div>
+
+<!-- ── Always-visible right-edge tab ── -->
+<div id="ot-sb-tab" title="OneTicketing Monitor — click to open/close">
+  <span id="ot-sb-tab-label">OT</span>
+  <span id="ot-sb-tab-badge">0</span>
+</div>
+
+<!-- ── Persistent Status Sidebar ── -->
+<div id="ot-sidebar">
+  <div id="ot-sb-header">
+    <span id="ot-sb-header-label">🎯 OT Monitor</span>
+    <button id="ot-sb-toggle-btn" type="button" title="Close sidebar">✕</button>
+  </div>
+  <div id="ot-sb-sections">
+    <div class="ot-sb-section">
+      <div class="ot-sb-section-title">📋 Active Tasks (<span id="ot-sb-task-count">…</span>)</div>
+      <div id="ot-sb-tasks-list"><span style="color:#444;font-size:10px">Loading…</span></div>
+    </div>
+    <div class="ot-sb-section">
+      <div class="ot-sb-section-title" style="display:flex;align-items:center;justify-content:space-between">
+        <span>📊 Children Status</span>
+        <button id="ot-sb-run-status" type="button"
+          title="Trigger a new get_children_status action run and refresh the status table"
+          style="font-size:9px;padding:1px 6px;background:#1a3a2a;color:#6dbf6d;border:1px solid #2a5a3a;border-radius:3px;cursor:pointer">↺ Refresh</button>
+      </div>
+      <div id="ot-sb-status-wrap"><span style="color:#444;font-size:10px">Loading…</span></div>
+    </div>
+    <div class="ot-sb-section">
+      <div class="ot-sb-section-title">📨 Replies</div>
+      <span id="ot-sb-reply-count" class="ot-sb-reply-badge">…</span>
+    </div>
+    <!-- Send Update to Child section -->
+    <div class="ot-sb-section">
+      <div class="ot-sb-section-title" style="display:flex;align-items:center;justify-content:space-between">
+        <span>📤 Send Update</span>
+        <button id="ot-sb-send-update-btn" type="button"
+          title="Push new findings, severity change or message to a child case"
+          style="font-size:9px;padding:1px 6px;background:#1a2a4a;color:#6aafff;border:1px solid #2a4a7a;border-radius:3px;cursor:pointer">▶ Open</button>
+      </div>
+      <div style="color:#445;font-size:9px;margin-top:3px">Push message, severity or observables to a child case</div>
+    </div>
+    <div id="ot-sb-footer">
+      <span id="ot-sb-updated">—</span>
+      <button id="ot-sb-refresh" type="button" title="Refresh">↺ Refresh</button>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+/* OneTicketing Parent widget — injected into the SOAR Investigation page context */
+(function(){
+  /* CIM field definitions for the "Add observable" dropdown.
+     Ref: Splunk CIM 5.1 — https://help.splunk.com/en/splunk-enterprise-security-8/common-information-model */
+  var CIM_FIELDS=[
+    /* Network Traffic */
+    {f:"sourceAddress",          l:"Source IP",             cat:"Network"},
+    {f:"destinationAddress",     l:"Destination IP",        cat:"Network"},
+    {f:"sourcePort",             l:"Source Port",           cat:"Network"},
+    {f:"destinationPort",        l:"Destination Port",      cat:"Network"},
+    {f:"transportProtocol",      l:"Protocol (tcp/udp)",    cat:"Network"},
+    {f:"networkDirection",       l:"Direction",             cat:"Network"},
+    {f:"bytesIn",                l:"Bytes In",              cat:"Network"},
+    {f:"bytesOut",               l:"Bytes Out",             cat:"Network"},
+    {f:"sourceMAC",              l:"Source MAC",            cat:"Network"},
+    {f:"destinationMAC",         l:"Destination MAC",       cat:"Network"},
+    /* Web / HTTP */
+    {f:"requestURL",             l:"URL / URI",             cat:"Web"},
+    {f:"domainName",             l:"Domain",                cat:"Web"},
+    {f:"requestMethod",          l:"HTTP Method",           cat:"Web"},
+    {f:"responseCode",           l:"HTTP Status Code",      cat:"Web"},
+    {f:"requestClientApplication",l:"User Agent",           cat:"Web"},
+    {f:"httpReferrer",           l:"HTTP Referrer",         cat:"Web"},
+    /* Email */
+    {f:"emailAddress",           l:"Email Address",         cat:"Email"},
+    {f:"emailSubject",           l:"Email Subject",         cat:"Email"},
+    {f:"sourceUserName",         l:"Sender (src_user)",     cat:"Email"},
+    {f:"destinationUserName",    l:"Recipient",             cat:"Email"},
+    /* File & Hash */
+    {f:"fileName",               l:"File Name",             cat:"File"},
+    {f:"filePath",               l:"File Path",             cat:"File"},
+    {f:"fileHashMd5",            l:"MD5 Hash",              cat:"File"},
+    {f:"fileHashSha1",           l:"SHA1 Hash",             cat:"File"},
+    {f:"fileHashSha256",         l:"SHA256 Hash",           cat:"File"},
+    {f:"fileSize",               l:"File Size (bytes)",     cat:"File"},
+    {f:"fileType",               l:"File Type",             cat:"File"},
+    /* Process & Endpoint */
+    {f:"processName",            l:"Process Name",          cat:"Endpoint"},
+    {f:"processId",              l:"PID",                   cat:"Endpoint"},
+    {f:"parentProcessName",      l:"Parent Process",        cat:"Endpoint"},
+    {f:"destinationNtHost",      l:"Hostname (dest)",       cat:"Endpoint"},
+    {f:"sourceNtHost",           l:"Source Host",           cat:"Endpoint"},
+    /* Identity & Auth */
+    {f:"destinationUserId",      l:"User",                  cat:"Identity"},
+    {f:"sourceUserId",           l:"Source User",           cat:"Identity"},
+    {f:"destinationNtDomain",    l:"Domain (NT)",           cat:"Identity"},
+    /* Vulnerability */
+    {f:"vulnerabilityId",        l:"CVE / Vuln ID",         cat:"Vulnerability"},
+    {f:"deviceEventCategory",    l:"Category",              cat:"Vulnerability"},
+    /* Generic */
+    {f:"subject",                l:"Subject / Title",       cat:"Generic"},
+    {f:"message",                l:"Message / Description", cat:"Generic"},
+    {f:"deviceAction",           l:"Action",                cat:"Generic"},
+    {f:"deviceCustomString1",    l:"Custom String 1",       cat:"Generic"},
+    {f:"deviceCustomString2",    l:"Custom String 2",       cat:"Generic"},
+  ];
+
+  /* Populate a <select> element with CIM fields grouped by category */
+  function buildCimSelect(selEl){
+    selEl.innerHTML="";
+    var cats={};
+    CIM_FIELDS.forEach(function(c){
+      if(!cats[c.cat]) cats[c.cat]=[];
+      cats[c.cat].push(c);
+    });
+    Object.keys(cats).forEach(function(cat){
+      var grp=document.createElement("optgroup"); grp.label=cat;
+      cats[cat].forEach(function(c){
+        var o=document.createElement("option"); o.value=c.f;
+        o.text=c.l+" ("+c.f+")"; grp.appendChild(o);
+      });
+      selEl.appendChild(grp);
+    });
+  }
+  var TAG_SENT="sent-to-child";
+
+  var _allArtifacts=[];
+  var _selectedIds=[];
+  var _newObs=[];
+  var _knownChildren=[];      /* {id, src} — loaded once, cached */
+  var _dispatchedChildren={}; /* id → true: already dispatched for this case (1:1 guard) */
+
+  /* ── helpers ── */
+  function getCid(){
+    var cid=0;
+    try{ var m=window.location.pathname.match(/\/mission\/(\d+)/); if(m) cid=parseInt(m[1],10); }catch(e){}
+    if(!cid){ try{ var q=new URLSearchParams(window.location.search); if(q.get("container")) cid=parseInt(q.get("container"),10); }catch(e){} }
+    return cid;
+  }
+  function getCsrf(){
+    try{ return (document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/)||[])[1]||""; }catch(e){ return ""; }
+  }
+  function escHtml(s){
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+  function typeInfo(art){
+    var cef=art.cef||{};
+    if(cef.sourceAddress||cef.destinationAddress) return {cls:"ot-type-ip",   label:"IP"};
+    if(cef.domainName||cef.requestURL)            return {cls:"ot-type-domain",label:"Domain"};
+    if(cef.fileHashMd5||cef.fileHashSha1||cef.fileHashSha256) return {cls:"ot-type-hash",label:"Hash"};
+    if(cef.emailAddress)                          return {cls:"ot-type-email", label:"Email"};
+    return {cls:"ot-type-other",label:"Other"};
+  }
+  function cefSummary(cef){
+    var e=Object.entries(cef||{});
+    return e.slice(0,2).map(function(x){ return x[0]+": "+String(x[1]).slice(0,28); }).join(" · ");
+  }
+  function updateObsSelCount(){
+    var n=document.querySelectorAll("#ot-obs-scroll input[type=checkbox]:checked").length;
+    document.getElementById("ot-sel-count").textContent=n+" selected";
+  }
+
+  /* ── observable list ── */
+  function renderObsList(){
+    var filter=(document.getElementById("ot-obs-filter-input")||{}).value||"";
+    filter=filter.toLowerCase();
+    var list=document.getElementById("ot-obs-scroll"); list.innerHTML="";
+    var shown=_allArtifacts.filter(function(a){
+      return !filter||(a.name+" "+JSON.stringify(a.cef||{})).toLowerCase().indexOf(filter)>=0;
+    });
+    if(!shown.length){ list.innerHTML='<div style="color:#666;font-size:12px;padding:8px">No matches.</div>'; return; }
+    shown.forEach(function(art){
+      var ti=typeInfo(art);
+      var row=document.createElement("div"); row.className="ot-obs-cb-row";
+      var cb=document.createElement("input"); cb.type="checkbox"; cb.value=art.id;
+      cb.addEventListener("change",updateObsSelCount);
+      var badge=document.createElement("span"); badge.className="ot-type-badge "+ti.cls; badge.textContent=ti.label;
+      var name=document.createElement("span"); name.className="ot-obs-name"; name.textContent=art.name||"Artifact #"+art.id;
+      var val=document.createElement("span");  val.className="ot-obs-val";  val.textContent=cefSummary(art.cef);
+      row.appendChild(cb); row.appendChild(badge); row.appendChild(name); row.appendChild(val);
+      list.appendChild(row);
+    });
+    updateObsSelCount();
+  }
+
+  /* ── New observable rows ── */
+  function addNewObsRow(){
+    var wrap=document.createElement("div"); wrap.className="ot-new-row";
+    var sel=document.createElement("select"); buildCimSelect(sel);
+    var inp=document.createElement("input"); inp.type="text"; inp.placeholder="Value";
+    var rm=document.createElement("button"); rm.className="ot-rm"; rm.type="button"; rm.textContent="X";
+    rm.onclick=function(){ wrap.parentNode.removeChild(wrap); };
+    wrap.appendChild(sel); wrap.appendChild(inp); wrap.appendChild(rm);
+    document.getElementById("ot-new-obs-list").appendChild(wrap);
+  }
+  function collectNewObs(){
+    var rows=document.querySelectorAll("#ot-new-obs-list .ot-new-row"); var out=[];
+    rows.forEach(function(r){
+      var f=r.querySelector("select").value, v=r.querySelector("input").value.trim();
+      if(v){ var cef={}; cef[f]=v; out.push({name:f+": "+v,type:"network",cef:cef}); }
+    });
+    return out;
+  }
+
+  /* ── load container artifacts ── */
+  function loadArtifacts(done){
+    var cid=getCid(); if(!cid){ done(); return; }
+    var loading=document.getElementById("ot-obs-loading");
+    var section=document.getElementById("ot-obs-section");
+    var noObs  =document.getElementById("ot-no-obs");
+    loading.style.display="block"; section.style.display="none"; noObs.style.display="none";
+    fetch("/rest/artifact?_filter_container_id="+cid+"&page_size=200&sort=id&order=desc",{credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var SKIP={"child_task_request":1,"child_reply":1,"child_reply_received":1,"monitor_heartbeat":1};
+      _allArtifacts=(data.data||[]).filter(function(a){
+        if(SKIP[a.label]) return false;
+        if((a.tags||[]).indexOf(TAG_SENT)>=0) return false;
+        if((a.tags||[]).indexOf("from-child")>=0) return false;
+        return true;
+      });
+      loading.style.display="none";
+      if(_allArtifacts.length>0){ section.style.display="block"; renderObsList(); }
+      else { noObs.style.display="block"; }
+      done();
+    })
+    .catch(function(){ loading.style.display="none"; noObs.style.display="block"; done(); });
+  }
+
+  /* ── load known child instances (two sources, deduplicated) ── */
+  function loadChildren(done){
+    if(_knownChildren.length>0){ renderChildList(); done(); return; }
+    document.getElementById("ot-child-loading").style.display="block";
+    document.getElementById("ot-child-none").style.display="none";
+
+    var found={};  /* id → source label */
+
+    /* Source 1: legacy per-child assets (child_id in asset config)
+       Source 3: children_registry_ids plain-text field on parent asset */
+    var p1=fetch("/rest/asset?page_size=100",{credentials:"same-origin"})
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        (data.data||[]).forEach(function(a){
+          var cfg=a.configuration||{};
+          /* Source 1: legacy per-child assets */
+          if(cfg.child_id && cfg.instance_role!=="parent"){
+            found[cfg.child_id]=found[cfg.child_id]||"asset config";
+          }
+          /* Source 3: children_registry_ids — plain-text, not encrypted.
+             Format: "DE_OT, SE_OT, NO_OT" */
+          if(cfg.children_registry_ids){
+            String(cfg.children_registry_ids).split(",").forEach(function(id){
+              id=id.trim();
+              if(id && !found[id]) found[id]="registry config";
+            });
+          }
+        });
+      }).catch(function(){});
+
+    /* Source 2: child_task_request artifacts for this case only.
+       Used to mark already-dispatched children as disabled (1:1 parent:child per case). */
+    var cid2=getCid();
+    var p2=fetch("/rest/artifact?_filter_container_id="+cid2+"&_filter_label=%22child_task_request%22&page_size=100&sort=id&order=desc",{credentials:"same-origin"})
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        (data.data||[]).forEach(function(a){
+          var id=(a.cef||{}).targetChildId;
+          if(id){
+            _dispatchedChildren[id]=true;  /* already sent for this case */
+            if(!found[id]) found[id]="dispatched";
+          }
+        });
+      }).catch(function(){});
+
+    Promise.all([p1,p2]).then(function(){
+      _knownChildren=Object.keys(found).sort().map(function(id){ return {id:id,src:found[id]}; });
+      document.getElementById("ot-child-loading").style.display="none";
+      renderChildList();
+      /* Show "Send Update" button only if at least one child has been dispatched */
+      var updBtn=document.getElementById("ot-upd-inline-btn");
+      if(updBtn) updBtn.style.display=Object.keys(_dispatchedChildren).length>0?"":"none";
+      syncToolbarUpdBtn();
+      done();
+    });
+  }
+
+  function renderChildList(){
+    var list=document.getElementById("ot-child-list"); list.innerHTML="";
+    if(!_knownChildren.length){
+      document.getElementById("ot-child-none").style.display="block";
+      return;
+    }
+    document.getElementById("ot-child-none").style.display="none";
+    _knownChildren.forEach(function(child){
+      addChildRow(child.id, child.src);
+    });
+    updatePreview();
+  }
+
+  function addChildRow(id, src){
+    /* Avoid duplicates */
+    if(document.querySelector(".ot-child-row[data-id='"+id+"']")) return;
+    var list=document.getElementById("ot-child-list");
+    var row=document.createElement("div");
+    row.className="ot-child-row"; row.setAttribute("data-id",id);
+    var cb=document.createElement("input"); cb.type="checkbox"; cb.value=id;
+    var isDispatched=!!_dispatchedChildren[id];
+    if(isDispatched){
+      /* Already dispatched for this case — disable to enforce 1:1 parent:child */
+      cb.disabled=true; cb.checked=false;
+      row.style.opacity="0.45"; row.style.cursor="default";
+      row.title="Already dispatched for this case";
+    } else {
+      cb.addEventListener("change",updatePreview);
+      row.onclick=function(e){ if(e.target!==cb){ cb.checked=!cb.checked; updatePreview(); } };
+    }
+    var lbl=document.createElement("span"); lbl.className="ot-child-label"; lbl.textContent=id;
+    var srcLabel=isDispatched?"✓ dispatched":(src||"");
+    var srcLbl=document.createElement("span"); srcLbl.className="ot-child-src";
+    srcLbl.textContent=srcLabel;
+    if(isDispatched) srcLbl.style.color="#6dbf6d";
+    row.appendChild(cb); row.appendChild(lbl); row.appendChild(srcLbl);
+    list.appendChild(row);
+    document.getElementById("ot-child-none").style.display="none";
+  }
+
+  function getSelectedChildren(){
+    return Array.from(document.querySelectorAll("#ot-child-list .ot-child-row input[type=checkbox]:checked"))
+      .map(function(cb){ return cb.value; });
+  }
+
+  function updatePreview(){
+    var n=_selectedIds.length+_newObs.length;
+    var children=getSelectedChildren();
+    var prev=document.getElementById("ot-preview"); if(!prev) return;
+    var targets=children.length>0 ? children.join(", ") : "—";
+    prev.textContent = (n>0 ? n+" observable(s)" : "Only task") + " will be sent to: "+targets;
+  }
+
+  /* ── step navigation ── */
+  function goStep2(skip){
+    _selectedIds=skip?[]:Array.from(document.querySelectorAll("#ot-obs-scroll input[type=checkbox]:checked"))
+      .map(function(cb){ return cb.value; });
+    _newObs=skip?[]:collectNewObs();
+    document.getElementById("ot-step1").style.display="none";
+    document.getElementById("ot-step2").style.display="block";
+    document.getElementById("ot-step-ind").textContent="Step 2 of 2 — Task details";
+    loadChildren(function(){ updatePreview(); });
+  }
+  function goStep1(){
+    document.getElementById("ot-step2").style.display="none";
+    document.getElementById("ot-step1").style.display="block";
+    document.getElementById("ot-step-ind").textContent="Step 1 of 2 — Select observables";
+  }
+
+  /* ── dispatch — one artifact per selected child ── */
+  function dispatch(){
+    var children=getSelectedChildren();
+    var title=document.getElementById("ot-title").value.trim();
+    var desc =document.getElementById("ot-desc").value.trim();
+    var sev  =document.getElementById("ot-sev").value;
+    var due  =document.getElementById("ot-due").value;
+    var msg  =document.getElementById("ot-msg");
+    var btn  =document.getElementById("ot-dispatch");
+    if(!children.length){ msg.textContent="Please select at least one Target Child."; return; }
+    if(!title||!desc){ msg.textContent="Title and Description are required."; return; }
+
+    var cid=getCid(); var csrf=getCsrf();
+    btn.disabled=true;
+    msg.textContent=_newObs.length>0?"Saving "+_newObs.length+" new observable(s)...":"Creating task(s)...";
+
+    /* Step A: save new observables as parent artifacts */
+    var savePromises=_newObs.map(function(obs){
+      var sdi="ot_task_obs_"+cid+"_"+obs.name.replace(/[^a-zA-Z0-9]/g,"_").slice(0,40);
+      return fetch("/rest/artifact",{
+        method:"POST", credentials:"same-origin",
+        headers:{"Content-Type":"application/json","X-CSRFToken":csrf,"X-Requested-With":"XMLHttpRequest"},
+        body:JSON.stringify({
+          container_id:cid, label:"artifact", name:obs.name, type:obs.type||"network",
+          source_data_identifier:sdi, cef:obs.cef, tags:[TAG_SENT], run_automation:false
+        })
+      }).then(function(r){ return r.json(); });
+    });
+
+    Promise.all(savePromises).then(function(saved){
+      var newIds=saved.filter(function(d){ return d.id; }).map(function(d){ return String(d.id); });
+      var allIds=_selectedIds.concat(newIds);
+
+      /* Step B: tag selected existing artifacts as sent-to-child */
+      var tagP=_allArtifacts.filter(function(a){
+        return _selectedIds.indexOf(String(a.id))>=0;
+      }).map(function(a){
+        var tags=(a.tags||[]).filter(function(t){ return t!==TAG_SENT; }).concat([TAG_SENT]);
+        return fetch("/rest/artifact/"+a.id,{
+          method:"POST", credentials:"same-origin",
+          headers:{"Content-Type":"application/json","X-CSRFToken":csrf,"X-Requested-With":"XMLHttpRequest"},
+          body:JSON.stringify({tags:tags})
+        });
+      });
+      return Promise.all(tagP).then(function(){ return allIds; });
+    })
+    .then(function(allIds){
+      /* Build combined observable data for child to recreate */
+      var selectedData=_allArtifacts.filter(function(a){
+        return _selectedIds.indexOf(String(a.id))>=0;
+      }).map(function(a){ return {name:a.name,type:a.type||"network",cef:a.cef||{}}; });
+      var allObsData=selectedData.concat(_newObs);
+
+      msg.textContent="Creating "+children.length+" task artifact(s)...";
+
+      /* Step C: one child_task_request artifact per selected child */
+      var dispatchPromises=children.map(function(childId){
+        var tlp=document.getElementById("ot-tlp-val").value||"TLP.AMBER";
+        var cef={
+          targetChildId:       childId,
+          taskTitle:           title,
+          taskDescription:     desc,
+          severity:            sev,
+          tlp:                 tlp,
+          parentCaseId:        String(cid),
+          selectedArtifactIds: allIds.join(",")
+        };
+        if(due) cef.dueDate=due+"T00:00:00Z";
+        if(allObsData.length) cef.observables=JSON.stringify(allObsData);
+        return fetch("/rest/artifact",{
+          method:"POST", credentials:"same-origin",
+          headers:{"Content-Type":"application/json","X-CSRFToken":csrf,"X-Requested-With":"XMLHttpRequest"},
+          body:JSON.stringify({
+            container_id:cid, label:"child_task_request",
+            name:"Child Task ["+childId+"]: "+title,
+            type:"network", cef:cef, run_automation:true
+          })
+        }).then(function(r){ return r.json(); });
+      });
+      return Promise.all(dispatchPromises);
+    })
+    .then(function(results){
+      var ok=results.filter(function(d){ return d.id||d.success; });
+      if(ok.length===children.length){
+        msg.style.color="#4caf50";
+        msg.textContent=ok.length+" task(s) dispatched successfully.";
+        setTimeout(function(){ hideOverlay(); msg.textContent=""; msg.style.color=""; btn.disabled=false; },2400);
+      } else {
+        msg.textContent=(ok.length)+"/"+children.length+" dispatched — check console for errors.";
+        btn.disabled=false;
+      }
+    })
+    .catch(function(e){ msg.textContent=e.message; btn.disabled=false; });
+  }
+
+  /* ── TLP selector click handler ── */
+  document.querySelectorAll(".ot-tlp-opt").forEach(function(el){
+    el.onclick=function(){
+      document.querySelectorAll(".ot-tlp-opt").forEach(function(x){ x.classList.remove("selected"); });
+      this.classList.add("selected");
+      document.getElementById("ot-tlp-val").value=this.getAttribute("data-tlp");
+    };
+  });
+
+  /* ── Load existing child task artifacts for this case ── */
+  function loadActiveChildren(cid){
+    if(!cid) return;
+    var wrap=document.getElementById("ot-active-wrap");
+    var tbody=document.getElementById("ot-active-tbody");
+    tbody.innerHTML="";
+    fetch("/rest/artifact?_filter_container_id="+cid+
+          "&_filter_label=%22child_task_request%22&sort=id&order=desc&page_size=50",
+          {credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var arts=data.data||[];
+      if(!arts.length){ wrap.style.display="none"; return; }
+      arts.forEach(function(a){
+        var c=a.cef||{};
+        var childId=escHtml(c.targetChildId||"—");
+        var title=String(c.taskTitle||a.name||"").slice(0,40);
+        var tlpRaw=c.tlp||"";
+        var tlpKey=tlpRaw.replace(/TLP\./i,"").toLowerCase()||"unknown";
+        var caseId=c.childCaseId||c.child_case_id||"";
+        var caseUrl=c.childInstanceUrl||"";
+        var caseCell=caseId
+          ? (caseUrl
+              ? "<a href='"+caseUrl+"/mission/"+caseId+"/analyst' target='_blank'>#"+escHtml(caseId)+"</a>"
+              : "#"+escHtml(caseId))
+          : "<span style='color:#444'>pending</span>";
+        var tr=document.createElement("tr");
+        tr.innerHTML=
+          "<td>"+childId+"</td>"+
+          "<td>"+caseCell+"</td>"+
+          "<td style='max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='"+escHtml(title)+"'>"+escHtml(title)+"</td>"+
+          "<td><span class='ot-tlp-pill ot-tlp-pill-"+tlpKey+"'>"+escHtml(tlpRaw||"—")+"</span></td>";
+        tbody.appendChild(tr);
+      });
+      wrap.style.display="block";
+    }).catch(function(){ wrap.style.display="none"; });
+  }
+
+  /* ── overlay open / close ── */
+  function showOverlay(){
+    _selectedIds=[]; _newObs=[];
+    document.getElementById("ot-new-obs-list").innerHTML="";
+    document.getElementById("ot-obs-filter-input").value="";
+    document.getElementById("ot-title").value="";
+    document.getElementById("ot-desc").value="";
+    document.getElementById("ot-due").value="";
+    document.getElementById("ot-sev").value="medium";
+    document.getElementById("ot-msg").textContent="";
+    document.getElementById("ot-dispatch").disabled=false;
+    document.getElementById("ot-child-custom").value="";
+    document.getElementById("ot-step1").style.display="block";
+    document.getElementById("ot-step2").style.display="none";
+    document.getElementById("ot-step-ind").textContent="Step 1 of 2 — Select observables";
+    /* Reset TLP to AMBER */
+    document.querySelectorAll(".ot-tlp-opt").forEach(function(x){ x.classList.remove("selected"); });
+    var amberEl=document.querySelector(".ot-tlp-amber");
+    if(amberEl) amberEl.classList.add("selected");
+    document.getElementById("ot-tlp-val").value="TLP.AMBER";
+    document.getElementById("ot-overlay").style.display="flex";
+    loadArtifacts(function(){});
+    loadActiveChildren(getCid());
+  }
+  function hideOverlay(){ document.getElementById("ot-overlay").style.display="none"; }
+
+  /* ── toolbar buttons (+ Child | ↑ Update) ── */
+  function injectToolbarBtn(){
+    if(document.getElementById("ot-tb-btn")) return;
+
+    var btn=document.createElement("button");
+    btn.id="ot-tb-btn"; btn.textContent="+ Child";
+    btn.title="Create Child Investigation Task (OneTicketing Sync)";
+    btn.onclick=showOverlay;
+
+    /* ↑ Update toolbar button — hidden until dispatched children exist */
+    var updBtn=document.createElement("button");
+    updBtn.id="ot-tb-upd-btn"; updBtn.textContent="↑ Update";
+    updBtn.title="Send Update to Child (OneTicketing Sync)";
+    updBtn.style.cssText="background:#1a2a4a;color:#6aafff;border:1px solid #2a4a7a;"+
+      "border-radius:4px;cursor:pointer;font-size:12px!important;font-weight:600;"+
+      "display:none;margin:0 4px;vertical-align:middle;padding:5px 13px;white-space:nowrap";
+    updBtn.onclick=openUpdateOverlay;
+
+    var inserted=false;
+    var btns=document.querySelectorAll("button,[role='button']");
+    for(var i=0;i<btns.length&&!inserted;i++){
+      var t=btns[i].textContent.trim();
+      if(t==="Summary"||t==="Analyst"){
+        var par=btns[i].parentNode;
+        for(var k=0;k<5&&par&&par!==document.body;k++){
+          if(par.children.length>=2){
+            par.appendChild(btn);
+            par.appendChild(updBtn);
+            inserted=true; break;
+          }
+          par=par.parentNode;
+        }
+      }
+    }
+    if(!inserted){
+      btn.style.cssText="position:fixed;bottom:28px;right:28px;z-index:99999;"+
+        "padding:10px 18px;border-radius:28px;background:#005a8e;color:#fff;border:none;"+
+        "cursor:pointer;font-size:13px;font-weight:600;box-shadow:0 4px 14px rgba(0,90,142,.7);";
+      updBtn.style.cssText="position:fixed;bottom:28px;right:130px;z-index:99999;"+
+        "padding:10px 18px;border-radius:28px;background:#1a2a4a;color:#6aafff;"+
+        "border:1px solid #2a4a7a;cursor:pointer;font-size:13px;font-weight:600;"+
+        "box-shadow:0 4px 14px rgba(0,0,0,.5);display:none;";
+      document.body.appendChild(btn);
+      document.body.appendChild(updBtn);
+    }
+  }
+
+  /* Sync toolbar ↑ Update button visibility with _dispatchedChildren state */
+  function syncToolbarUpdBtn(){
+    var tbUpd=document.getElementById("ot-tb-upd-btn");
+    if(tbUpd) tbUpd.style.display=Object.keys(_dispatchedChildren).length>0?"":"none";
+  }
+
+  /* ── note modal ── */
+  function showNoteModal(noteId,noteTitle,childId,ts){
+    var o=document.getElementById("ot-note-overlay");
+    document.getElementById("ot-note-title").textContent=noteTitle||"Note";
+    document.getElementById("ot-note-meta").textContent="Child: "+childId+" · "+ts;
+    var body=document.getElementById("ot-note-body");
+    body.textContent="Loading..."; o.style.display="flex";
+    if(!noteId){ body.textContent="(Note ID not available)"; return; }
+    fetch("/rest/note/"+noteId,{credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(d){ body.textContent=d.content||d.message||JSON.stringify(d); })
+    .catch(function(e){ body.textContent="Error: "+e.message; });
+  }
+
+  /* ── reply table ── */
+  var _tblVis=true;
+  document.getElementById("ot-reply-toggle").onclick=function(){
+    _tblVis=!_tblVis;
+    document.getElementById("ot-reply-table-wrap").style.display=_tblVis?"block":"none";
+    this.textContent=_tblVis?"▾ Hide":"▸ Show";
+  };
+  (function loadReplyTable(){
+    var cid=getCid(); if(!cid) return;
+    fetch("/rest/artifact?_filter_container_id="+cid+"&_filter_label=%22child_reply_received%22&sort=id&order=desc&page_size=25",{credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      /* Filter protocol artifacts (noteContent === "start" = playbook init trigger, not a real reply).
+         If all replies are filtered, show a diagnostic warning row. */
+      var _allReps=data.data||[];
+      var reps=_allReps.filter(function(rep){
+        return ((rep.cef||{}).noteContent||"").trim().toLowerCase()!=="start";
+      });
+      var _filteredCnt=_allReps.length-reps.length;
+      if(!reps.length){
+        if(_filteredCnt>0){
+          /* Replies exist but all contain protocol "Start" content — show warning */
+          document.getElementById("ot-rb-count").textContent="0 replies (\u26a0 "+_filteredCnt+" filtered)";
+          document.getElementById("ot-reply-section").style.display="block";
+          var _tbody2=document.getElementById("ot-reply-tbody"); _tbody2.innerHTML="";
+          var _wtr=document.createElement("tr");
+          _wtr.innerHTML='<td colspan="6" style="color:#c90;font-style:italic;text-align:center;padding:8px">'+
+            '\u26a0 '+_filteredCnt+' notification(s) received but all have noteContent \u201cStart\u201d \u2014 '+
+            'the child playbook filter_reply_to_parent is processing an old artifact. '+
+            'Tag or delete the old child_reply artifact with noteContent=Start on each child SOAR.</td>';
+          _tbody2.appendChild(_wtr);
+        }
+        return;
+      }
+      document.getElementById("ot-rb-count").textContent=reps.length+(reps.length===1?" reply":" replies");
+      document.getElementById("ot-reply-section").style.display="block";
+      var tbody=document.getElementById("ot-reply-tbody"); tbody.innerHTML="";
+      reps.forEach(function(rep){
+        var c=rep.cef||{};
+        var ts=(c.repliedAt||rep.create_time||"").replace("T"," ").slice(0,16);
+        var preview=escHtml(String(c.noteContent||"").slice(0,80));
+        var tr=document.createElement("tr");
+        tr.innerHTML=
+          '<td style="white-space:nowrap;color:#888">'+escHtml(ts)+'</td>'+
+          '<td style="color:#6dbf6d;font-weight:600">'+escHtml(c.childId||"—")+'</td>'+
+          '<td>'+escHtml(c.noteTitle||"—")+'</td>'+
+          '<td class="ot-note-preview" title="'+preview+'">'+preview+(c.noteContent&&c.noteContent.length>80?"…":"")+'</td>'+
+          '<td style="text-align:center"><span class="ot-obs-badge">'+parseInt(c.observableCount||0,10)+'</span></td>'+
+          '<td></td>';
+        var vb=document.createElement("button"); vb.className="ot-view-btn"; vb.textContent="👁 View";
+        vb.onclick=(function(nId,nT,ch,nTs){ return function(){ showNoteModal(nId,nT,ch,nTs); }; })
+          (c.parentNoteId||"",c.noteTitle||"Note from "+(c.childId||"Child"),c.childId||"Child",ts);
+        tr.cells[5].appendChild(vb);
+        tbody.appendChild(tr);
+      });
+    }).catch(function(){});
+  })();
+
+  /* ── wire controls ── */
+  document.getElementById("ot-btn").onclick         = showOverlay;
+  document.getElementById("ot-upd-inline-btn").onclick = openUpdateOverlay;
+  document.getElementById("ot-cancel1").onclick     = hideOverlay;
+  document.getElementById("ot-cancel2").onclick     = hideOverlay;
+  document.getElementById("ot-overlay").onclick     = function(e){ if(e.target===this) hideOverlay(); };
+  document.getElementById("ot-skip1").onclick       = function(){ goStep2(true); };
+  document.getElementById("ot-next1").onclick       = function(){ goStep2(false); };
+  document.getElementById("ot-back2").onclick       = goStep1;
+  document.getElementById("ot-add-obs-btn").onclick = function(e){ e.preventDefault(); addNewObsRow(); };
+  document.getElementById("ot-dispatch").onclick    = dispatch;
+  document.getElementById("ot-obs-all").onchange    = function(){
+    document.querySelectorAll("#ot-obs-scroll input[type=checkbox]")
+      .forEach(function(cb){ cb.checked=this.checked; }.bind(this));
+    updateObsSelCount();
+  };
+  document.getElementById("ot-obs-filter-input").oninput = renderObsList;
+  document.getElementById("ot-note-close").onclick  = function(){ document.getElementById("ot-note-overlay").style.display="none"; };
+  document.getElementById("ot-note-overlay").onclick= function(e){ if(e.target===this) this.style.display="none"; };
+
+  /* "+ Add" button for custom child ID */
+  document.getElementById("ot-child-add-btn").onclick=function(){
+    var inp=document.getElementById("ot-child-custom");
+    var val=inp.value.trim();
+    if(!val) return;
+    /* Add to known children if not already there */
+    if(!_knownChildren.find(function(c){ return c.id===val; })){
+      _knownChildren.push({id:val,src:"manual"});
+    }
+    addChildRow(val,"manual");
+    /* auto-check the newly added row */
+    var row=document.querySelector(".ot-child-row[data-id='"+val+"']");
+    if(row){ var cb=row.querySelector("input[type=checkbox]"); if(cb){ cb.checked=true; updatePreview(); } }
+    inp.value="";
+  };
+  document.getElementById("ot-child-custom").onkeydown=function(e){
+    if(e.key==="Enter"){ e.preventDefault(); document.getElementById("ot-child-add-btn").click(); }
+  };
+
+
+  /* ── Active tasks panel ── */
+  function tlpPillHtml(raw){
+    var key=(raw||"").replace(/TLP\.?/i,"").toLowerCase()||"unknown";
+    return raw?"<span class='ot-tk-tlp ot-tk-tlp-"+key+"'>"+escHtml(raw)+"</span>":"<span class='ot-tk-tlp ot-tk-tlp-unknown'>—</span>";
+  }
+  function statusBadgeHtml(s){
+    var cls="ot-tk-"+(s||"unknown").toLowerCase().replace(/[^a-z_]/g,"_");
+    return "<span class='ot-tk-status "+cls+"'>"+(s||"?").toUpperCase()+"</span>";
+  }
+  function loadTasksPanel(){
+    var cid=getCid(); if(!cid) return;
+    var loading=document.getElementById("ot-tasks-loading");
+    var empty=document.getElementById("ot-tasks-empty");
+    var table=document.getElementById("ot-tasks-table");
+    var tbody=document.getElementById("ot-tasks-tbody");
+    var ts=document.getElementById("ot-tasks-ts");
+    if(loading) loading.style.display="block";
+    if(empty)   empty.style.display="none";
+    if(table)   table.style.display="none";
+    fetch("/rest/artifact?_filter_container_id="+cid+"&_filter_label=%22child_task_request%22&sort=id&order=desc&page_size=50",{credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var rows=data.data||[];
+      if(loading) loading.style.display="none";
+      var now=new Date(); if(ts) ts.textContent="Updated: "+now.toLocaleTimeString();
+      if(!rows.length){ if(empty) empty.style.display="block"; return; }
+      tbody.innerHTML="";
+      rows.forEach(function(a){
+        var cef=a.cef||{};
+        var childId=escHtml(cef.targetChildId||"?");
+        var rawTitle=cef.taskTitle||a.name||"—";
+        /* Prefix task name with child case ID for display */
+        var caseId=cef.childCaseId||cef.child_case_id||"";
+        var caseTag=caseId?"[#"+escHtml(caseId)+"] ":"[pending] ";
+        var taskTitle=caseTag+escHtml(rawTitle);
+        var tlpHtml=tlpPillHtml(cef.tlp||"");
+        var created=(a.create_time||"").replace("T"," ").replace(/\.\d+Z$/,"");
+        var tr=document.createElement("tr");
+        tr.innerHTML="<td><strong>"+childId+"</strong></td>"+
+          "<td title='"+escHtml(cef.taskDescription||"")+"'>"+taskTitle+"</td>"+
+          "<td>"+tlpHtml+"</td>"+
+          "<td style='font-size:10px;color:#666'>"+escHtml(created)+"</td>";
+        tbody.appendChild(tr);
+      });
+      if(table) table.style.display="table";
+    })
+    .catch(function(e){ if(loading) loading.textContent="Error: "+e.message; });
+  }
+  /* Collapse toggle */
+  document.getElementById("ot-tasks-head").addEventListener("click",function(){
+    var body=document.getElementById("ot-tasks-body");
+    var tog=this.querySelector(".ot-tk-toggle");
+    var hidden=body.style.display==="none";
+    body.style.display=hidden?"block":"none";
+    if(tog) tog.textContent=hidden?"▾":"▸";
+  });
+  document.getElementById("ot-tasks-refresh").addEventListener("click",function(e){
+    e.stopPropagation(); loadTasksPanel();
+  });
+  loadTasksPanel();
+  setInterval(loadTasksPanel, 30000);   // auto-refresh every 30 s
+
+  injectToolbarBtn();
+
+  /* ── Persistent Status Sidebar ── */
+
+  function openSidebar(){
+    document.getElementById("ot-sidebar").classList.add("ot-sb-visible");
+    loadSidebarData();
+  }
+  function closeSidebar(){
+    document.getElementById("ot-sidebar").classList.remove("ot-sb-visible");
+  }
+  function updateTabBadge(count){
+    var badge=document.getElementById("ot-sb-tab-badge");
+    if(!badge) return;
+    if(count>0){ badge.textContent=count; badge.style.display="block"; }
+    else { badge.style.display="none"; }
+  }
+
+  /* Tab click: toggle sidebar open/close */
+  document.getElementById("ot-sb-tab").addEventListener("click",function(){
+    var sb=document.getElementById("ot-sidebar");
+    if(sb.classList.contains("ot-sb-visible")){ closeSidebar(); }
+    else { openSidebar(); }
+  });
+
+  /* ✕ button in sidebar header: close */
+  document.getElementById("ot-sb-toggle-btn").addEventListener("click",function(e){
+    e.stopPropagation();
+    closeSidebar();
+  });
+
+  document.getElementById("ot-sb-refresh").addEventListener("click",function(){
+    loadSidebarData();
+  });
+
+  /* On load: check for child tasks → update badge, auto-open if tasks exist */
+  function initSidebar(){
+    var cid=getCid(); if(!cid) return;
+    fetch("/rest/artifact?_filter_container_id="+cid+"&_filter_label=%22child_task_request%22&page_size=1",{credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var count=parseInt(data.count||0,10);
+      updateTabBadge(count);
+      if(count>0){ openSidebar(); } /* auto-open when tasks exist */
+    }).catch(function(){});
+  }
+
+  function loadSidebarData(){
+    var cid=getCid(); if(!cid) return;
+
+    /* Tasks section */
+    fetch("/rest/artifact?_filter_container_id="+cid+"&_filter_label=%22child_task_request%22&sort=id&order=desc&page_size=20",{credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var rows=data.data||[];
+      var cnt=document.getElementById("ot-sb-task-count");
+      var list=document.getElementById("ot-sb-tasks-list");
+      if(cnt) cnt.textContent=rows.length;
+      updateTabBadge(rows.length);
+      if(!list) return;
+      if(!rows.length){ list.innerHTML='<span style="color:#444;font-size:10px">None</span>'; return; }
+      list.innerHTML="";
+      rows.slice(0,8).forEach(function(a){
+        var cef=a.cef||{};
+        var row=document.createElement("div"); row.className="ot-sb-task-row";
+        var child=document.createElement("span"); child.className="ot-sb-child-tag";
+        child.textContent=cef.targetChildId||"?"; child.title=cef.targetChildId||"";
+        /* Prefix task name with child case ID */
+        var caseId=cef.childCaseId||cef.child_case_id||"";
+        var rawTitle=cef.taskTitle||a.name||"—";
+        var displayTitle=(caseId?"[#"+caseId+"] ":"[pending] ")+rawTitle;
+        var title=document.createElement("span"); title.className="ot-sb-task-title";
+        title.textContent=displayTitle; title.title=rawTitle;
+        /* TLP pill in sidebar */
+        var tlpRaw=cef.tlp||"";
+        var tlpKey=tlpRaw.replace(/TLP\.?/i,"").toLowerCase()||"unknown";
+        var tlp=document.createElement("span");
+        tlp.className="ot-tk-tlp ot-tk-tlp-"+tlpKey;
+        tlp.style.cssText="flex-shrink:0;font-size:9px;padding:1px 4px";
+        tlp.textContent=tlpRaw||"—";
+        row.appendChild(child); row.appendChild(title); row.appendChild(tlp);
+        list.appendChild(row);
+      });
+      if(rows.length>8){
+        var more=document.createElement("div");
+        more.style.cssText="font-size:9px;color:#444;padding:3px 0";
+        more.textContent="+"+(rows.length-8)+" more";
+        list.appendChild(more);
+      }
+    }).catch(function(){});
+
+    /* Replies section: fetch all, filter out protocol artifacts (noteContent=Start) */
+    /* Warning shown when all replies are filtered as protocol artifacts */
+    fetch("/rest/artifact?_filter_container_id="+cid+"&_filter_label=%22child_reply_received%22&page_size=50",{credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var cnt=document.getElementById("ot-sb-reply-count");
+      var _all=data.data||[];
+      var real=_all.filter(function(a){
+        return ((a.cef||{}).noteContent||"").trim().toLowerCase()!=="start";
+      });
+      var _filtered=_all.length-real.length;
+      if(!cnt) return;
+      if(real.length>0){
+        cnt.textContent=real.length+" received";
+        cnt.style.color=""; cnt.title="";
+      } else if(_filtered>0){
+        cnt.textContent="0 received \u26a0";
+        cnt.style.color="#c90";
+        cnt.title=_filtered+" notification(s) arrived but all contain protocol content (noteContent=\u201cStart\u201d). "+
+          "The child playbook filter_reply_to_parent is processing an old artifact. "+
+          "Tag or delete the old child_reply artifact with noteContent=Start on each child SOAR.";
+      } else {
+        cnt.textContent="0 received";
+        cnt.style.color=""; cnt.title="";
+      }
+    }).catch(function(){});
+
+    /* Children status from latest get_children_status action run */
+    loadSidebarStatus(cid);
+
+    /* Timestamp */
+    var ts=document.getElementById("ot-sb-updated");
+    if(ts) ts.textContent="Updated: "+new Date().toLocaleTimeString();
+  }
+
+  function loadSidebarStatus(cid){
+    var wrap=document.getElementById("ot-sb-status-wrap"); if(!wrap) return;
+    wrap.innerHTML='<span style="color:#444;font-size:10px">Loading…</span>';
+    /* Step 1: latest action_run for get_children_status on this container */
+    fetch("/rest/action_run?_filter_container_id="+cid+"&sort=id&order=desc&page_size=30",{credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(arData){
+      var matching=(arData.data||[]).filter(function(ar){
+        return (ar.action||"").toLowerCase().indexOf("children")>=0 ||
+               (ar.action||"").toLowerCase().indexOf("child status")>=0;
+      });
+      if(!matching.length){
+        /* Fallback: read child_task_request artifacts and show placeholder table */
+        fetch("/rest/artifact?_filter_container_id="+cid+"&_filter_label=%22child_task_request%22&page_size=100",{credentials:"same-origin"})
+        .then(function(r){ return r.json(); })
+        .then(function(artData){
+          var seen={}, placeholders=[];
+          (artData.data||[]).forEach(function(a){
+            var id=(a.cef||{}).targetChildId;
+            if(id && !seen[id]){
+              seen[id]=true;
+              placeholders.push({
+                child_id:       id,
+                case_title:     "(pending)",
+                child_case_id:  "—",
+                status:         "new",
+                artifact_count: 0
+              });
+            }
+          });
+          if(!placeholders.length){
+            wrap.innerHTML='<span style="color:#444;font-size:10px">Run \'Get Children Status\' action first</span>';
+          } else {
+            renderSidebarStatus(placeholders,wrap);
+          }
+        })
+        .catch(function(){
+          wrap.innerHTML='<span style="color:#444;font-size:10px">Run \'Get Children Status\' action first</span>';
+        });
+        return;
+      }
+      var arId=matching[0].id;
+      /* Step 2: get app_run ID for this action_run */
+      return fetch("/rest/app_run?_filter_action_run_id="+arId+"&page_size=1",{credentials:"same-origin"})
+      .then(function(r){ return r.json(); })
+      .then(function(listData){
+        var appRow=(listData.data||[])[0]; if(!appRow) return;
+        /* Step 3: fetch individual app_run with include_expensive=true to get result_data */
+        return fetch("/rest/app_run/"+appRow.id+"?include_expensive=true",{credentials:"same-origin"})
+        .then(function(r){ return r.json(); })
+        .then(function(fullApp){
+          var children=[];
+          (fullApp.result_data||[]).forEach(function(item){
+            var dArr=item.data;
+            if(!dArr) return;
+            if(!Array.isArray(dArr)) dArr=[dArr];
+            dArr.forEach(function(child){
+              if(child && child.child_id){ children.push(child); }
+            });
+          });
+          if(!children.length){
+            wrap.innerHTML='<span style="color:#444;font-size:10px">No status data returned</span>';
+            return;
+          }
+          renderSidebarStatus(children,wrap);
+        });
+      });
+    })
+    .catch(function(){ wrap.innerHTML='<span style="color:#444;font-size:10px">Status unavailable</span>'; });
+  }
+
+  function renderSidebarStatus(children,wrap){
+    var html='<table id="ot-sb-status-table">'+
+      '<thead><tr><th>Child</th><th>Case</th><th>Status</th><th>Arts</th><th>Owner</th></tr></thead><tbody>';
+    children.forEach(function(c){
+      var childId=String(c.child_id||"?");
+      var caseTitle=String(c.case_title||"");
+      var caseId=String(c.child_case_id||"");
+      var caseUrl=String(c.child_url||"");
+      var status=(c.status||"new").toLowerCase(); /* field is "status" not "case_status" */
+      var artCount=parseInt(c.artifact_count||0,10);
+      var owner=String(c.assigned_user||"—");
+      /* Known statuses get a coloured badge; custom statuses get amber (ot-sb-custom) */
+      var _knownSt=["new","open","closed"];
+      var badgeCls="ot-sb-"+(_knownSt.indexOf(status)>=0 ? status : (status&&status!=="unknown"?"custom":"unknown"));
+      /* Always show #caseId as a clickable link; full title in tooltip */
+      var caseCell;
+      if(caseId && caseId!=="—"){
+        var linkTitle=caseTitle ? escHtml(caseTitle)+" #"+escHtml(caseId) : "#"+escHtml(caseId);
+        caseCell=caseUrl
+          ? "<a href='"+escHtml(caseUrl)+"' target='_blank' title='"+linkTitle+"' style='color:#6aafff;font-size:10px'>#"+escHtml(caseId)+"</a>"
+          : "<span title='"+linkTitle+"' style='color:#6aafff;font-size:10px'>#"+escHtml(caseId)+"</span>";
+      } else {
+        caseCell="<span style='color:#444;font-size:10px'>pending</span>";
+      }
+      /* Shorten email owners to local part for display; full address in tooltip */
+      var ownerDisplay=owner.indexOf("@")>0 ? owner.split("@")[0] : owner;
+      html+="<tr>"+
+        "<td style='color:#6dbf6d;font-weight:600;font-size:10px'>"+escHtml(childId)+"</td>"+
+        "<td style='font-size:10px'>"+caseCell+"</td>"+
+        "<td><span class='ot-sb-badge "+badgeCls+"'>"+escHtml(status.toUpperCase())+"</span></td>"+
+        "<td style='text-align:center;color:#889;font-size:10px'>"+artCount+"</td>"+
+        "<td style='font-size:10px;color:#aabbd0;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='"+escHtml(owner)+"'>"+escHtml(ownerDisplay)+"</td>"+
+        "</tr>";
+    });
+    html+="</tbody></table>";
+    wrap.innerHTML=html;
+  }
+
+  /* ── Refresh children status in sidebar ── */
+  /* action_run trigger: re-run on parent_update artifacts. Safe because
+     display_get_children_status in one_ticketing_view.py now returns
+     create_child_task.html instead of one_ticketing_view.html. When SOAR
+     auto-switches to the new action_run's result widget it will still render
+     the full modern widget — toolbar buttons and sidebar are re-initialised
+     by the widget JS on load. */
+  function runGetChildrenStatus(){
+    var cid=getCid(); if(!cid) return;
+    var btn=document.getElementById("ot-sb-run-status");
+    if(btn){ btn.disabled=true; btn.textContent="⟳ Running…"; btn.style.color="#888"; }
+    var csrf=getCsrf();
+    fetch("/rest/asset?page_size=50",{credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var parentAsset=(data.data||[]).find(function(a){
+        return (a.configuration||{}).instance_role==="parent";
+      });
+      if(!parentAsset) throw new Error("No parent asset found — is a parent asset configured?");
+      return fetch("/rest/action_run",{
+        method:"POST", credentials:"same-origin",
+        headers:{"Content-Type":"application/json","X-CSRFToken":csrf,"X-Requested-With":"XMLHttpRequest"},
+        body:JSON.stringify({
+          "action":       "get children status",
+          "name":         "Get Children Status",
+          "type":         "action",
+          "container_id": cid,
+          "targets":      [{"app_id": parentAsset.app, "assets": [parentAsset.id],
+                            "parameters": [{"parent_case_id": String(cid)}]}]
+        })
+      }).then(function(r){ return r.json(); });
+    })
+    .then(function(result){
+      /* SOAR will auto-switch to the new action_run's result widget which will
+         re-render create_child_task.html and refresh all data automatically. */
+      if(result.failed || result.success===false || result.authenticated===false){
+        var btn2=document.getElementById("ot-sb-run-status");
+        if(btn2){ btn2.disabled=false; btn2.textContent="↺ Refresh"; btn2.style.color="#c55"; }
+        console.error("[OT] runGetChildrenStatus failed:", result);
+      }
+    })
+    .catch(function(err){
+      var btn2=document.getElementById("ot-sb-run-status");
+      if(btn2){ btn2.disabled=false; btn2.textContent="↺ Refresh"; btn2.style.color="#c55"; }
+      console.error("[OT] runGetChildrenStatus error:", err);
+    });
+  }
+
+  document.getElementById("ot-sb-run-status").addEventListener("click",function(e){
+    e.stopPropagation();
+    runGetChildrenStatus();
+  });
+
+  /* ── Send Update to Child — 2-step ─────────────────────────── */
+
+  var _updSentIds={};   /* artifact IDs already sent to the selected child */
+
+  function openUpdateOverlay(){
+    var cid=getCid(); if(!cid) return;
+    var childList=document.getElementById("ot-upd-child-list");
+    var childNone=document.getElementById("ot-upd-child-none");
+    var allCb=document.getElementById("ot-upd-child-all");
+
+    /* Reset UI */
+    childList.innerHTML=""; childNone.style.display="none"; allCb.checked=false;
+    document.getElementById("ot-upd-comment").value="";
+    document.getElementById("ot-upd-sev").value="";
+    document.getElementById("ot-upd-due").value="";
+    document.getElementById("ot-upd-obs-list").innerHTML="";
+    document.getElementById("ot-upd-step1").style.display="block";
+    document.getElementById("ot-upd-step2").style.display="none";
+    document.getElementById("ot-upd-step-ind").textContent="Step 1 of 2";
+    document.getElementById("ot-upd-overlay").style.display="flex";
+
+    /* Populate checkbox list with dispatched children for this case */
+    fetch("/rest/artifact?_filter_container_id="+cid+
+          "&_filter_label=%22child_task_request%22&page_size=50",
+          {credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var seen={};
+      (d.data||[]).forEach(function(a){
+        var id=(a.cef||{}).targetChildId;
+        if(id && !seen[id]){
+          seen[id]=true;
+          var row=document.createElement("div");
+          row.style.cssText="display:flex;align-items:center;gap:8px;padding:5px 6px;"+
+            "border-bottom:1px solid #141d2e;font-size:12px;cursor:pointer";
+          row.onmouseover=function(){ this.style.background="#111d30"; };
+          row.onmouseout=function(){ this.style.background=""; };
+          var cb=document.createElement("input"); cb.type="checkbox"; cb.value=id;
+          cb.style.cssText="flex:0 0 14px;cursor:pointer";
+          var lbl=document.createElement("span");
+          lbl.style.cssText="color:#ccd;font-weight:500;flex:1";
+          lbl.textContent=id;
+          row.onclick=function(e){ if(e.target!==cb){ cb.checked=!cb.checked; syncAllCb(); }};
+          cb.onchange=syncAllCb;
+          row.appendChild(cb); row.appendChild(lbl);
+          childList.appendChild(row);
+        }
+      });
+      if(!Object.keys(seen).length) childNone.style.display="block";
+    }).catch(function(){ childNone.style.display="block"; });
+
+    /* "All" checkbox syncs all child checkboxes */
+    allCb.onchange=function(){
+      childList.querySelectorAll("input[type=checkbox]")
+        .forEach(function(cb){ cb.checked=allCb.checked; });
+    };
+  }
+
+  function syncAllCb(){
+    var all=childList_all_checked();
+    document.getElementById("ot-upd-child-all").checked=all;
+  }
+  function childList_all_checked(){
+    var cbs=document.getElementById("ot-upd-child-list").querySelectorAll("input[type=checkbox]");
+    return cbs.length>0 && Array.from(cbs).every(function(cb){ return cb.checked; });
+  }
+  function getUpdSelectedChildren(){
+    return Array.from(
+      document.getElementById("ot-upd-child-list").querySelectorAll("input[type=checkbox]:checked")
+    ).map(function(cb){ return cb.value; });
+  }
+
+  function closeUpdateOverlay(){
+    document.getElementById("ot-upd-overlay").style.display="none";
+  }
+
+  /* Move from Step 1 → Step 2: load parent artifacts filtered by child sent-status */
+  function updGoStep2(){
+    var cid=getCid(); if(!cid) return;
+    var selectedChildren=getUpdSelectedChildren();
+    if(!selectedChildren.length){
+      var msg=document.getElementById("ot-upd-msg");
+      msg.style.color="#e55"; msg.textContent="Please select at least one target child."; return;
+    }
+
+    document.getElementById("ot-upd-step1").style.display="none";
+    document.getElementById("ot-upd-step2").style.display="block";
+    var label=selectedChildren.length===1?selectedChildren[0]:selectedChildren.length+" children";
+    document.getElementById("ot-upd-step-ind").textContent="Step 2 of 2 — "+label;
+    document.getElementById("ot-upd-msg").textContent="";
+    document.getElementById("ot-upd-send").disabled=false;
+    document.getElementById("ot-upd-obs-list").innerHTML="";
+
+    var artsLoading=document.getElementById("ot-upd-arts-loading");
+    var artsScroll=document.getElementById("ot-upd-arts-scroll");
+    var artsEmpty=document.getElementById("ot-upd-arts-empty");
+    artsLoading.style.display="block"; artsScroll.style.display="none"; artsEmpty.style.display="none";
+
+    /* Step A: find artifact IDs already sent to ANY of the selected children */
+    _updSentIds={};
+    var pSent=fetch("/rest/artifact?_filter_container_id="+cid+
+          "&_filter_label=%22child_task_request%22&page_size=50",
+          {credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      (d.data||[]).forEach(function(a){
+        var cef=a.cef||{};
+        if(selectedChildren.indexOf(cef.targetChildId)>=0){
+          var ids=(cef.selectedArtifactIds||"").split(",").filter(Boolean);
+          ids.forEach(function(id){ _updSentIds[id.trim()]=true; });
+        }
+      });
+    }).catch(function(){});
+
+    /* Step B: fetch all real parent artifacts */
+    var SKIP_LABELS={child_task_request:1,child_reply:1,child_reply_received:1,
+      parent_update:1,tlp_escalation:1,monitor_heartbeat:1,
+      parent_case_reference:1,evidence_sync_trigger:1};
+    var pArts=fetch("/rest/artifact?_filter_container_id="+cid+
+          "&page_size=200&sort=id&order=asc",{credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      return (d.data||[]).filter(function(a){
+        return !SKIP_LABELS[a.label||""];
+      });
+    });
+
+    Promise.all([pSent, pArts]).then(function(results){
+      var realArts=results[1]||[];
+      artsLoading.style.display="none";
+      if(!realArts.length){ artsEmpty.style.display="block"; return; }
+      artsScroll.style.display="block"; artsScroll.innerHTML="";
+
+      realArts.forEach(function(art){
+        var isSent=!!_updSentIds[String(art.id)];
+        var row=document.createElement("div");
+        row.style.cssText="display:flex;align-items:center;gap:6px;padding:3px 4px;"+(isSent?"opacity:0.55":"");
+        var cb=document.createElement("input"); cb.type="checkbox"; cb.value=art.id;
+        cb.disabled=isSent;
+        var badge=document.createElement("span");
+        var ti=typeInfo(art);
+        badge.className="ot-type-badge "+ti.cls; badge.textContent=ti.label;
+        var name=document.createElement("span");
+        name.style.cssText="flex:1;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+        name.textContent=(art.name||"Artifact #"+art.id);
+        if(isSent){
+          var tag=document.createElement("span");
+          tag.style.cssText="font-size:9px;color:#6dbf6d;flex-shrink:0";
+          tag.textContent="✓ sent";
+          row.appendChild(cb); row.appendChild(badge); row.appendChild(name); row.appendChild(tag);
+        } else {
+          row.appendChild(cb); row.appendChild(badge); row.appendChild(name);
+        }
+        artsScroll.appendChild(row);
+      });
+    }).catch(function(){
+      artsLoading.style.display="none"; artsEmpty.style.display="block";
+    });
+  }
+
+  /* Add a new observable row in the Update form */
+  function addUpdateObs(){
+    var list=document.getElementById("ot-upd-obs-list");
+    var row=document.createElement("div");
+    row.style.cssText="display:flex;gap:4px;align-items:center;flex-wrap:wrap";
+    var sel=document.createElement("select");
+    sel.style.cssText="background:#0d1526;border:1px solid #2a3a55;color:#ccd;padding:3px 5px;border-radius:3px;font-size:10px;max-width:180px";
+    buildCimSelect(sel);
+    var inp=document.createElement("input"); inp.type="text"; inp.placeholder="Value";
+    inp.style.cssText="flex:1;min-width:80px;background:#0d1526;border:1px solid #2a3a55;color:#ccd;padding:3px 6px;border-radius:3px;font-size:10px";
+    var rm=document.createElement("button"); rm.type="button";
+    rm.style.cssText="background:none;border:none;color:#c55;cursor:pointer;font-size:13px;padding:0 2px";
+    rm.title="Remove"; rm.textContent="✕";
+    rm.onclick=function(){ list.removeChild(row); };
+    row.appendChild(sel); row.appendChild(inp); row.appendChild(rm);
+    list.appendChild(row);
+  }
+
+  function sendUpdate(){
+    var cid=getCid(); if(!cid) return;
+    var selectedChildren=getUpdSelectedChildren();
+    var comment=document.getElementById("ot-upd-comment").value.trim();
+    var sev=document.getElementById("ot-upd-sev").value;
+    var due=document.getElementById("ot-upd-due").value;
+
+    /* Collect checked existing artifact IDs */
+    var artIds=[];
+    document.getElementById("ot-upd-arts-scroll").querySelectorAll("input[type=checkbox]:checked")
+    .forEach(function(cb){ artIds.push(cb.value); });
+
+    /* Collect new observables from CIM field rows */
+    var obsList=[];
+    document.getElementById("ot-upd-obs-list").querySelectorAll("div").forEach(function(row){
+      var sel=row.querySelector("select");
+      var inp=row.querySelector("input[type=text]");
+      var fieldKey=sel?sel.value:"sourceAddress";
+      var val=inp?inp.value.trim():"";
+      if(val){
+        var fieldInfo=CIM_FIELDS.filter(function(c){ return c.f===fieldKey; })[0];
+        var lbl=fieldInfo?fieldInfo.l:fieldKey;
+        var cef={}; cef[fieldKey]=val;
+        obsList.push({name:lbl+": "+val, type:"network", cef:cef});
+      }
+    });
+
+    if(!comment && !sev && !due && !artIds.length && !obsList.length){
+      document.getElementById("ot-upd-msg").style.color="#e55";
+      document.getElementById("ot-upd-msg").textContent="Add at least one change to send.";
+      return;
+    }
+
+    var btn=document.getElementById("ot-upd-send");
+    var msg=document.getElementById("ot-upd-msg");
+    btn.disabled=true; msg.style.color="#888"; msg.textContent="Finding parent asset…";
+
+    var csrf=getCsrf();
+    fetch("/rest/asset?page_size=50",{credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var parentAsset=(data.data||[]).find(function(a){
+        return (a.configuration||{}).instance_role==="parent";
+      });
+      if(!parentAsset) throw new Error("No parent asset found");
+
+      msg.textContent="Dispatching to "+selectedChildren.length+" child(ren)…";
+
+      /* One action_run per selected child */
+      var promises=selectedChildren.map(function(childId){
+        var params={parent_case_id:String(cid), target_child_id:childId};
+        if(comment)        params.comment=comment;
+        if(sev)            params.severity=sev;
+        if(due)            params.due_date=due+"T00:00:00Z";
+        if(artIds.length)  params.artifact_ids=artIds.join(",");
+        if(obsList.length) params.new_observables=JSON.stringify(obsList);
+        return fetch("/rest/action_run",{
+          method:"POST", credentials:"same-origin",
+          headers:{"Content-Type":"application/json","X-CSRFToken":csrf,"X-Requested-With":"XMLHttpRequest"},
+          body:JSON.stringify({
+            "action":       "update child case",
+            "name":         "Send Update to Child: "+childId,
+            "type":         "action",
+            "container_id": cid,
+            "targets":      [{"app_id": parentAsset.app, "assets": [parentAsset.id], "parameters": [params]}]
+          })
+        }).then(function(r){ return r.json(); })
+        .then(function(result){
+          if(result.failed || result.success===false || result.authenticated===false){
+            return {childId:childId, ok:false, error:result.message||"failed"};
+          }
+          return {childId:childId, ok:true};
+        }).catch(function(e){ return {childId:childId, ok:false, error:e.message}; });
+      });
+
+      return Promise.all(promises);
+    })
+    .then(function(results){
+      var ok=results.filter(function(r){ return r.ok; });
+      var failed=results.filter(function(r){ return !r.ok; });
+      if(failed.length===0){
+        msg.style.color="#6dbf6d";
+        msg.textContent="✓ Update dispatched to: "+ok.map(function(r){ return r.childId; }).join(", ");
+      } else {
+        msg.style.color="#e55";
+        msg.textContent=ok.length+"/"+results.length+" dispatched. Failed: "+
+          failed.map(function(r){ return r.childId+"("+r.error+")"; }).join(", ");
+      }
+      btn.disabled=false;
+      setTimeout(function(){ closeUpdateOverlay(); loadSidebarData(); }, 2800);
+    })
+    .catch(function(e){
+      msg.style.color="#e55"; msg.textContent="Error: "+escHtml(e.message);
+      btn.disabled=false;
+    });
+  }
+
+  /* Wire up Send Update overlay events */
+  document.getElementById("ot-sb-send-update-btn").addEventListener("click",function(e){
+    e.stopPropagation(); openUpdateOverlay();
+  });
+  document.getElementById("ot-upd-cancel").addEventListener("click", closeUpdateOverlay);
+  document.getElementById("ot-upd-cancel2").addEventListener("click", closeUpdateOverlay); /*  */
+  document.getElementById("ot-upd-overlay").addEventListener("click",function(e){
+    if(e.target===this) closeUpdateOverlay();
+  });
+  document.getElementById("ot-upd-next1").addEventListener("click", updGoStep2);
+  document.getElementById("ot-upd-back2").addEventListener("click",function(){
+    document.getElementById("ot-upd-step2").style.display="none";
+    document.getElementById("ot-upd-step1").style.display="block";
+    document.getElementById("ot-upd-step-ind").textContent="Step 1 of 2";
+  });
+  document.getElementById("ot-upd-add-obs").addEventListener("click", addUpdateObs);
+  document.getElementById("ot-upd-send").addEventListener("click", sendUpdate);
+
+  /* Init Update button visibility on page load */
+  function initUpdateBtn(){
+    var cid=getCid(); if(!cid) return;
+    fetch("/rest/artifact?_filter_container_id="+cid+"&_filter_label=%22child_task_request%22&page_size=100",{credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      (data.data||[]).forEach(function(a){
+        var id=(a.cef||{}).targetChildId;
+        if(id) _dispatchedChildren[id]=true;
+      });
+      var btn=document.getElementById("ot-upd-inline-btn");
+      if(btn) btn.style.display=Object.keys(_dispatchedChildren).length>0?"":"none";
+      syncToolbarUpdBtn();
+    }).catch(function(){});
+  }
+
+  /* Auto-refresh sidebar every 60 s */
+  initSidebar();
+  initUpdateBtn();
+  setInterval(function(){
+    var sb=document.getElementById("ot-sidebar");
+    if(sb && sb.classList.contains("ot-sb-visible")) loadSidebarData();
+  }, 60000);
+
+})();
+</script>
+</div></div></div></div>

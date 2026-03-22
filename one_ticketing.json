@@ -1,0 +1,930 @@
+{
+  "appid": "6ce7ec95-85b9-4445-ba8f-4cd48c52e94a",
+  "name": "OneTicketing Sync",
+  "description": "Federated Parent-Child case management across Splunk ES 8.4 instances. Button-driven workflow: create and update child cases, relay context and replies. No automatic sync \u2014 all actions are analyst-initiated.",
+  "publisher": "Andreas Buis",
+  "package_name": "phantom_one_ticketing",
+  "type": "ticketing",
+  "license": "Copyright 2026 Andreas Buis",
+  "app_version": "1.6.0",
+  "product_vendor": "Splunk",
+  "product_name": "Splunk Enterprise Security 8.4",
+  "product_version_regex": ".*",
+  "min_phantom_version": "6.0.0",
+  "python_version": "3.13",
+  "main_module": "one_ticketing_connector",
+  "logo": "one_ticketing.svg",
+  "logo_dark": "one_ticketing_dark.svg",
+  "contributors": [
+    {
+      "name": "Andreas Buis"
+    },
+    {
+      "name": "Created with Claude, model claude-sonnet-4-6"
+    }
+  ],
+  "pip3_dependencies": {
+    "pypi": [
+      {
+        "module": "requests"
+      },
+      {
+        "module": "urllib3"
+      }
+    ]
+  },
+  "pip313_dependencies": {
+    "pypi": [
+      {
+        "module": "requests"
+      },
+      {
+        "module": "urllib3"
+      }
+    ]
+  },
+  "configuration": {
+    "server": {
+      "description": "Base URL of the remote SOAR. Parent role: leave empty when using children_registry. Child role: URL of Parent SOAR (e.g. https://parent.soar.example.com).",
+      "data_type": "string",
+      "required": false,
+      "order": 0
+    },
+    "ph_auth_token": {
+      "description": "REST API token of the remote SOAR automation user. Parent role: leave empty when using children_registry. Child role: token of the Parent SOAR automation user.",
+      "data_type": "password",
+      "required": false,
+      "order": 1
+    },
+    "instance_role": {
+      "description": "Role of this instance in the federation: 'parent' or 'child'.",
+      "data_type": "string",
+      "required": true,
+      "order": 2
+    },
+    "child_id": {
+      "description": "Unique identifier for this child (e.g. CERT_NO_OT). Required when instance_role is 'child'.",
+      "data_type": "string",
+      "required": false,
+      "order": 3
+    },
+    "sync_interval_sec": {
+      "description": "Reference value only. Actual interval is set in Asset Settings \u2192 Ingest \u2192 Polling Interval.",
+      "data_type": "numeric",
+      "required": false,
+      "order": 5
+    },
+    "enable_offline_queue": {
+      "description": "Queue sync requests locally when Parent is unreachable; flush via flush_sync_queue. Default: true.",
+      "data_type": "boolean",
+      "required": false,
+      "order": 6
+    },
+    "phantom_token": {
+      "description": "SOAR automation user token for multi-child routing (reads targetChildId from artifact CEF via local REST API). Required when SOAR does not set PHANTOM_TOKEN env var automatically. Get token: Admin > User Management > Automation user > Copy auth token. Without this, all assets process all artifacts (may cause 400 duplicate errors).",
+      "data_type": "password",
+      "required": false,
+      "order": 7
+    },
+    "container_label": {
+      "description": "Default container label for child cases. Must exist in Administration \u2192 Event Settings \u2192 Labels. Default: events.",
+      "data_type": "string",
+      "required": false,
+      "default": "events",
+      "order": 7
+    },
+    "sync_trigger_label": {
+      "description": "Label assigned to Sync Trigger containers created by on_poll. Must match the label filter in the downstream playbook. Default: sync_trigger.",
+      "data_type": "string",
+      "required": false,
+      "default": "sync_trigger",
+      "order": 8
+    },
+    "default_workbook": {
+      "description": "Name of the SOAR workbook template to assign to new child cases (e.g. 'IT Security Investigation'). The app looks up the template ID automatically by name. If not found, the system default workbook is used. Leave empty to use only the system default.",
+      "data_type": "string",
+      "required": false,
+      "default": "",
+      "order": 9
+    },
+    "children_registry": {
+      "description": "JSON map of child connections used by the Parent for dynamic dispatch. Format: {\"DE_OT\": {\"url\": \"https://child-de.soar.example.com\", \"token\": \"xxx\"}, ...}. When set, create_child_case and update_child_case route directly to the correct child based on targetChildId from the artifact CEF \u2014 no per-child assets needed.",
+      "data_type": "password",
+      "required": false,
+      "order": 1
+    },
+    "children_registry_ids": {
+      "description": "Comma-separated list of Child IDs registered in children_registry. Example: DE_OT, SE_OT, NO_OT  This field is NOT encrypted and is read by the widget to populate the Target Child selector. It must match the keys in children_registry exactly. Update this list whenever you add or remove a child from children_registry.",
+      "data_type": "string",
+      "required": false,
+      "order": 2
+    }
+  },
+  "actions": [
+    {
+      "action": "test connectivity",
+      "identifier": "test_connectivity",
+      "description": "Validates connectivity to the configured Splunk ES instance, checks authentication, and verifies the configured instance role.",
+      "type": "test",
+      "read_only": true,
+      "parameters": {},
+      "output": [],
+      "versions": "EQ(*)"
+    },
+    {
+      "action": "create child case",
+      "identifier": "create_child_case",
+      "description": "Creates a new Child case on a remote Child ES instance and links it to an existing Parent case ID. Used by the Parent to distribute tasks to specific CERTs.",
+      "type": "generic",
+      "read_only": false,
+      "parameters": {
+        "parent_case_id": {
+          "description": "ID of the Parent case to link the new Child case to.",
+          "data_type": "string",
+          "required": true,
+          "order": 0
+        },
+        "case_name": {
+          "description": "Display name for the new Child case.",
+          "data_type": "string",
+          "required": true,
+          "order": 1
+        },
+        "description": {
+          "description": "Detailed description of the Child case task or investigation scope.",
+          "data_type": "string",
+          "required": true,
+          "order": 2
+        },
+        "severity": {
+          "description": "Severity level: low, medium, high, critical.",
+          "data_type": "string",
+          "required": true,
+          "order": 3
+        },
+        "assigned_to": {
+          "description": "Optional Splunk username to assign the Child case to in the remote instance.",
+          "data_type": "string",
+          "required": false,
+          "order": 4
+        },
+        "tags": {
+          "description": "Comma-separated list of tags to apply to the Child case (e.g. threat-hunting,apts,parent-distributed).",
+          "data_type": "string",
+          "required": false,
+          "order": 5
+        },
+        "due_date": {
+          "description": "Optional due date for the Child case in ISO 8601 format (e.g. 2026-03-31T17:00:00Z).",
+          "data_type": "string",
+          "required": false,
+          "order": 6
+        },
+        "label": {
+          "description": "Container label override for this case (e.g. events, alert, incident). Overrides the asset-level container_label setting. Leave empty to use the asset default.",
+          "data_type": "string",
+          "required": false,
+          "order": 8
+        },
+        "observables": {
+          "description": "JSON array of observable objects from the child_task_request artifact. Map from artifact.cef.observables. Each item must have 'name', 'type' and 'cef' fields. Every observable will be created as a separate SOAR artifact on the child case container so child playbooks can use them.",
+          "data_type": "string",
+          "required": false,
+          "order": 7
+        },
+        "target_child_id": {
+          "description": "Optional. Child ID to target (e.g. CERT_CHILDE_02). When the parent playbook runs this action on ALL OneTicketing assets, each asset skips the call if its configured child_id does not match this value. Leave empty to always execute on the current asset.",
+          "data_type": "string",
+          "required": false,
+          "default": "",
+          "order": 9
+        },
+        "tlp": {
+          "description": "TLP classification for the child case (e.g. TLP.AMBER). Inherited from the parent case and applied as a tag on the created child case.",
+          "data_type": "string",
+          "required": false,
+          "default": "TLP.AMBER",
+          "order": 10
+        }
+      },
+      "output": [
+        {
+          "data_path": "action_result.data.*.child_case_id",
+          "data_type": "string",
+          "column_name": "Child Case ID",
+          "column_order": 0
+        },
+        {
+          "data_path": "action_result.data.*.parent_case_id",
+          "data_type": "string",
+          "column_name": "Parent Case ID",
+          "column_order": 1
+        },
+        {
+          "data_path": "action_result.data.*.child_instance_url",
+          "data_type": "string",
+          "column_name": "Child Instance",
+          "column_order": 2
+        },
+        {
+          "data_path": "action_result.data.*.creation_status",
+          "data_type": "string",
+          "column_name": "Status",
+          "column_order": 3
+        },
+        {
+          "data_path": "action_result.data.*.created_at",
+          "data_type": "string",
+          "column_name": "Created At",
+          "column_order": 4
+        },
+        {
+          "data_path": "action_result.data.*.observable_artifacts",
+          "data_type": "numeric",
+          "column_name": "Observables Created",
+          "column_order": 5
+        }
+      ],
+      "versions": "EQ(*)"
+    },
+    {
+      "action": "update child case",
+      "identifier": "update_child_case",
+      "description": "Pushes an update (message, severity, new observables, due date) from the Parent to an existing Child case. Use target_child_id with children_registry (recommended) or omit for legacy per-asset mode. Creates a parent_update artifact on the child case to trigger child-side playbooks.",
+      "type": "generic",
+      "read_only": false,
+      "parameters": {
+        "parent_case_id": {
+          "description": "Parent SOAR container ID. Used to locate the existing child case.",
+          "data_type": "string",
+          "required": true,
+          "order": 0
+        },
+        "target_child_id": {
+          "description": "Registry ID of the target child (e.g. DE_OT, SE_OT). Required when using children_registry mode. The action will look up the child URL and token from the registry.",
+          "data_type": "string",
+          "required": false,
+          "order": 1
+        },
+        "comment": {
+          "description": "Message / update text to post as a note [PARENT_UPDATE] on the child case.",
+          "data_type": "string",
+          "required": false,
+          "order": 2
+        },
+        "severity": {
+          "description": "New severity for the child case (low / medium / high / critical). Leave empty to keep existing severity.",
+          "data_type": "string",
+          "required": false,
+          "order": 3
+        },
+        "new_observables": {
+          "description": "JSON array of new observable objects to add to the child case. Each object: {\"name\":\"...\",\"type\":\"network\",\"cef\":{...}}",
+          "data_type": "string",
+          "required": false,
+          "order": 4
+        },
+        "artifact_ids": {
+          "description": "Comma-separated list of parent artifact IDs to copy as observables to the child case.",
+          "data_type": "string",
+          "required": false,
+          "order": 5
+        },
+        "due_date": {
+          "description": "New due date for the child case (ISO 8601, e.g. 2026-12-31T23:59:00Z). Leave empty to keep existing.",
+          "data_type": "string",
+          "required": false,
+          "order": 6
+        }
+      },
+      "output": [
+        {
+          "data_path": "action_result.data.*.update_status",
+          "data_type": "string"
+        },
+        {
+          "data_path": "action_result.data.*.child_case_id",
+          "data_type": "string"
+        },
+        {
+          "data_path": "action_result.data.*.child_id",
+          "data_type": "string"
+        },
+        {
+          "data_path": "action_result.data.*.child_instance_url",
+          "data_type": "string"
+        },
+        {
+          "data_path": "action_result.data.*.note_posted",
+          "data_type": "boolean"
+        },
+        {
+          "data_path": "action_result.data.*.artifacts_copied",
+          "data_type": "numeric"
+        },
+        {
+          "data_path": "action_result.data.*.severity_updated",
+          "data_type": "boolean"
+        },
+        {
+          "data_path": "action_result.data.*.due_date_updated",
+          "data_type": "boolean"
+        },
+        {
+          "data_path": "action_result.data.*.obs_added",
+          "data_type": "numeric"
+        },
+        {
+          "data_path": "action_result.summary.update_status",
+          "data_type": "string"
+        },
+        {
+          "data_path": "action_result.status",
+          "data_type": "string"
+        },
+        {
+          "data_path": "action_result.message",
+          "data_type": "string"
+        }
+      ],
+      "versions": "EQ(*)"
+    },
+    {
+      "action": "get children status",
+      "identifier": "get_children_status",
+      "description": "Retrieves the current status of all Child cases linked to a Parent case. Returns aggregated status, severity, last sync time and findings count per child.",
+      "type": "investigate",
+      "read_only": true,
+      "parameters": {
+        "parent_case_id": {
+          "description": "ID of the Parent case for which to retrieve all Child statuses.",
+          "data_type": "string",
+          "required": true,
+          "order": 0
+        }
+      },
+      "output": [
+        {
+          "data_path": "action_result.data.*.child_id",
+          "data_type": "string",
+          "column_name": "Child ID",
+          "column_order": 0
+        },
+        {
+          "data_path": "action_result.data.*.child_case_id",
+          "data_type": "string",
+          "column_name": "Child Case ID",
+          "column_order": 1
+        },
+        {
+          "data_path": "action_result.data.*.status",
+          "data_type": "string",
+          "column_name": "Status",
+          "column_order": 2
+        },
+        {
+          "data_path": "action_result.data.*.severity",
+          "data_type": "string",
+          "column_name": "Severity",
+          "column_order": 3
+        },
+        {
+          "data_path": "action_result.data.*.last_sync",
+          "data_type": "string",
+          "column_name": "Last Sync",
+          "column_order": 4
+        },
+        {
+          "data_path": "action_result.data.*.findings_count",
+          "data_type": "numeric",
+          "column_name": "Findings",
+          "column_order": 5
+        },
+        {
+          "data_path": "action_result.data.*.reachable",
+          "data_type": "boolean",
+          "column_name": "Reachable",
+          "column_order": 6
+        },
+        {
+          "data_path": "action_result.data.*.tlp",
+          "data_type": "string",
+          "column_name": "TLP",
+          "column_order": 7
+        },
+        {
+          "data_path": "action_result.data.*.assigned_user",
+          "data_type": "string",
+          "column_name": "Assigned To",
+          "column_order": 8
+        },
+        {
+          "data_path": "action_result.data.*.child_url",
+          "data_type": "string",
+          "column_name": "Child URL",
+          "column_order": 9
+        },
+        {
+          "data_path": "action_result.data.*.artifact_count",
+          "data_type": "numeric",
+          "column_name": "Artifacts",
+          "column_order": 10
+        },
+        {
+          "data_path": "action_result.data.*.tlp_escalated",
+          "data_type": "boolean",
+          "column_name": "TLP Escalated",
+          "column_order": 11
+        }
+      ],
+      "render": {
+        "type": "custom",
+        "view": "one_ticketing_view.display_get_children_status"
+      },
+      "versions": "EQ(*)"
+    },
+    {
+      "action": "update case status",
+      "identifier": "update_case_status",
+      "description": "Updates the status and/or severity of a case on a remote ES instance (Parent or Child). Supports bidirectional updates.",
+      "type": "generic",
+      "read_only": false,
+      "parameters": {
+        "case_id": {
+          "description": "Case ID on the remote ES instance to update.",
+          "data_type": "string",
+          "required": true,
+          "order": 0
+        },
+        "new_status": {
+          "description": "New status to set: open, in_progress, closed.",
+          "data_type": "string",
+          "required": true,
+          "order": 1
+        },
+        "new_severity": {
+          "description": "Optional new severity: low, medium, high, critical. If omitted, severity is not changed.",
+          "data_type": "string",
+          "required": false,
+          "order": 2
+        },
+        "reason": {
+          "description": "Optional reason or comment explaining the status change. Posted as a note on the case.",
+          "data_type": "string",
+          "required": false,
+          "order": 3
+        }
+      },
+      "output": [
+        {
+          "data_path": "action_result.data.*.case_id",
+          "data_type": "string",
+          "column_name": "Case ID",
+          "column_order": 0
+        },
+        {
+          "data_path": "action_result.data.*.old_status",
+          "data_type": "string",
+          "column_name": "Previous Status",
+          "column_order": 1
+        },
+        {
+          "data_path": "action_result.data.*.new_status",
+          "data_type": "string",
+          "column_name": "New Status",
+          "column_order": 2
+        },
+        {
+          "data_path": "action_result.data.*.old_severity",
+          "data_type": "string",
+          "column_name": "Previous Severity",
+          "column_order": 3
+        },
+        {
+          "data_path": "action_result.data.*.new_severity",
+          "data_type": "string",
+          "column_name": "New Severity",
+          "column_order": 4
+        },
+        {
+          "data_path": "action_result.data.*.updated_at",
+          "data_type": "string",
+          "column_name": "Updated At",
+          "column_order": 5
+        }
+      ],
+      "versions": "EQ(*)"
+    },
+    {
+      "action": "close child case",
+      "identifier": "close_child_case",
+      "description": "Closes a Child case locally. National CERTs can close their own cases without requiring Parent action. Optionally notifies the Parent with a resolution note.",
+      "type": "generic",
+      "read_only": false,
+      "parameters": {
+        "container_id": {
+          "description": "Local SOAR container ID of the Child case to close.",
+          "data_type": "numeric",
+          "required": true,
+          "order": 0
+        },
+        "parent_case_id": {
+          "description": "Parent case ID to notify upon closure. Required if notify_parent is true.",
+          "data_type": "string",
+          "required": false,
+          "order": 1
+        },
+        "resolution_note": {
+          "description": "Resolution summary to attach to the case before closing. Also posted to Parent if notify_parent is true.",
+          "data_type": "string",
+          "required": true,
+          "order": 2
+        },
+        "resolution_outcome": {
+          "description": "Outcome classification: no_finding, ioc_confirmed, escalated, resolved, duplicate.",
+          "data_type": "string",
+          "required": true,
+          "order": 3
+        },
+        "notify_parent": {
+          "description": "If true, posts a closure notification to the Parent case and updates the child reference status. Default: true.",
+          "data_type": "boolean",
+          "required": false,
+          "order": 4
+        }
+      },
+      "output": [
+        {
+          "data_path": "action_result.data.*.closed_case_id",
+          "data_type": "string",
+          "column_name": "Closed Case ID",
+          "column_order": 0
+        },
+        {
+          "data_path": "action_result.data.*.closure_timestamp",
+          "data_type": "string",
+          "column_name": "Closed At",
+          "column_order": 1
+        },
+        {
+          "data_path": "action_result.data.*.parent_notified",
+          "data_type": "boolean",
+          "column_name": "Parent Notified",
+          "column_order": 2
+        },
+        {
+          "data_path": "action_result.data.*.resolution_outcome",
+          "data_type": "string",
+          "column_name": "Outcome",
+          "column_order": 3
+        }
+      ],
+      "versions": "EQ(*)"
+    },
+    {
+      "action": "scan evidence",
+      "identifier": "scan_evidence",
+      "description": "Scans the local SOAR Evidence store for items added since the last on_poll run. Creates an Evidence Sync Trigger container for each new evidence item not already in the sync registry. The downstream playbook (label: evidence_sync_trigger) then picks up the container and pushes the evidence file to the Parent. Also called internally by on_poll.",
+      "type": "investigate",
+      "read_only": false,
+      "parameters": {
+        "since_timestamp": {
+          "description": "ISO 8601 timestamp to filter evidence items. Only items created after this time are returned. Defaults to last_poll_timestamp from app state.",
+          "data_type": "string",
+          "required": false,
+          "order": 0
+        },
+        "container_id": {
+          "description": "Optional: restrict scan to a single SOAR container. Leave empty to scan all containers.",
+          "data_type": "numeric",
+          "required": false,
+          "order": 1
+        }
+      },
+      "output": [
+        {
+          "data_path": "action_result.data.*.new_evidence_count",
+          "data_type": "numeric",
+          "column_name": "New Evidence",
+          "column_order": 0
+        },
+        {
+          "data_path": "action_result.data.*.already_synced_count",
+          "data_type": "numeric",
+          "column_name": "Already Synced",
+          "column_order": 1
+        },
+        {
+          "data_path": "action_result.data.*.triggered_containers.*.evidence_id",
+          "data_type": "string",
+          "column_name": "Evidence ID",
+          "column_order": 2
+        },
+        {
+          "data_path": "action_result.data.*.triggered_containers.*.trigger_container",
+          "data_type": "numeric",
+          "column_name": "Trigger Container",
+          "column_order": 3
+        }
+      ],
+      "versions": "EQ(*)"
+    },
+    {
+      "action": "request child investigation",
+      "identifier": "request_child_investigation",
+      "description": "Parent action: sends a structured investigation task to a specific Child CERT by writing a [TASK:child_id] note to the Parent case. The Child detects this note on its next pull_from_parent run, auto-creates a local SOAR case, and posts back a [TASK_ACCEPTED:child_id] confirmation. Task state is tracked in the App State Registry.",
+      "type": "investigate",
+      "read_only": false,
+      "parameters": {
+        "parent_case_id": {
+          "description": "Parent case ID to write the task note to.",
+          "data_type": "string",
+          "required": true,
+          "order": 0
+        },
+        "target_child_id": {
+          "description": "Child identifier to assign the task to (e.g. CERT_NO_OT, CERT_GER_OT).",
+          "data_type": "string",
+          "required": true,
+          "order": 1
+        },
+        "task_title": {
+          "description": "Short title for the investigation task.",
+          "data_type": "string",
+          "required": true,
+          "order": 2
+        },
+        "task_description": {
+          "description": "Full description of the task scope and context for the Child CERT.",
+          "data_type": "string",
+          "required": true,
+          "order": 3
+        },
+        "severity": {
+          "description": "Severity for the task: low, medium, high, or critical.",
+          "data_type": "string",
+          "required": true,
+          "order": 4
+        },
+        "due_date": {
+          "description": "Optional ISO 8601 due date for the task (e.g. 2026-03-20T17:00:00Z).",
+          "data_type": "string",
+          "required": false,
+          "order": 5
+        },
+        "observables": {
+          "description": "JSON array of observable objects to embed in the task note. Each item: {\"name\": \"...\", \"type\": \"ip|domain|hash|url\", \"cef\": {\"sourceAddress\": \"1.2.3.4\"}}. The Child will create SOAR Artifacts from these automatically \u2014 no manual JSON needed in normal use (see Custom Widget).",
+          "data_type": "string",
+          "required": false,
+          "order": 6
+        },
+        "tlp": {
+          "description": "TLP classification for the task (e.g. TLP.AMBER). Embedded in the task note and propagated to the child case as a tag.",
+          "data_type": "string",
+          "required": false,
+          "default": "TLP.AMBER",
+          "order": 7
+        }
+      },
+      "output": [
+        {
+          "data_path": "action_result.data.*.parent_case_id",
+          "data_type": "string",
+          "column_name": "Parent Case ID",
+          "column_order": 0
+        },
+        {
+          "data_path": "action_result.data.*.target_child_id",
+          "data_type": "string",
+          "column_name": "Target Child",
+          "column_order": 1
+        },
+        {
+          "data_path": "action_result.data.*.task_note_id",
+          "data_type": "string",
+          "column_name": "Task Note ID",
+          "column_order": 2
+        },
+        {
+          "data_path": "action_result.data.*.task_status",
+          "data_type": "string",
+          "column_name": "Task Status",
+          "column_order": 3
+        },
+        {
+          "data_path": "action_result.data.*.dispatched_observables",
+          "data_type": "numeric",
+          "column_name": "Observables",
+          "column_order": 4
+        },
+        {
+          "data_path": "action_result.data.*.dispatched_at",
+          "data_type": "string",
+          "column_name": "Dispatched At",
+          "column_order": 5
+        },
+        {
+          "data_path": "action_result.data.*.tlp",
+          "data_type": "string",
+          "column_name": "TLP",
+          "column_order": 6
+        }
+      ],
+      "render": {
+        "type": "custom",
+        "width": 12,
+        "height": 5,
+        "title": "Create Child Task",
+        "view": "one_ticketing_view.display_create_child_task_widget"
+      },
+      "versions": "EQ(*)"
+    },
+    {
+      "action": "reply to parent",
+      "identifier": "reply_to_parent",
+      "description": "Child action: sends a structured reply from a Child CERT back to the Parent. Transfers selected observables (artifacts) and a free-text note to the Parent case. Triggered by a child_reply artifact created by the 'Reply to Parent' widget. On the Child: logs a note, tags transferred artifacts as synced-to-parent. On the Parent: creates observable artifacts, posts a [CHILD_REPLY] note, tags the container child-replied, and creates a child_reply_received notification artifact.",
+      "type": "generic",
+      "read_only": false,
+      "parameters": {
+        "parent_case_id": {
+          "description": "Parent SOAR container ID to send the reply to. Map from artifact.cef.parentCaseId.",
+          "data_type": "string",
+          "required": true,
+          "order": 0
+        },
+        "container_id": {
+          "description": "Local SOAR container ID of the Child case (needed for local artifact/note operations).",
+          "data_type": "numeric",
+          "required": true,
+          "order": 1
+        },
+        "note_content": {
+          "description": "Free-text reply content (analysis findings, recommendations, questions). Map from artifact.cef.noteContent.",
+          "data_type": "string",
+          "required": true,
+          "order": 2
+        },
+        "note_title": {
+          "description": "Optional subject/title for the reply note. Map from artifact.cef.noteTitle.",
+          "data_type": "string",
+          "required": false,
+          "order": 3
+        },
+        "selected_artifact_ids": {
+          "description": "Comma-separated list of local artifact IDs to transfer to the parent. Map from artifact.cef.selectedArtifactIds.",
+          "data_type": "string",
+          "required": false,
+          "order": 4
+        },
+        "new_observables": {
+          "description": "JSON array of new observable objects to add locally and transfer to parent. Each item: {name, type, cef}. Map from artifact.cef.newObservables.",
+          "data_type": "string",
+          "required": false,
+          "order": 5
+        }
+      },
+      "output": [
+        {
+          "data_path": "action_result.data.*.parent_case_id",
+          "data_type": "string",
+          "column_name": "Parent Case",
+          "column_order": 0
+        },
+        {
+          "data_path": "action_result.data.*.child_id",
+          "data_type": "string",
+          "column_name": "Child ID",
+          "column_order": 1
+        },
+        {
+          "data_path": "action_result.data.*.observables_transferred",
+          "data_type": "numeric",
+          "column_name": "Obs. Transferred",
+          "column_order": 2
+        },
+        {
+          "data_path": "action_result.data.*.parent_note_id",
+          "data_type": "string",
+          "column_name": "Parent Note ID",
+          "column_order": 3
+        },
+        {
+          "data_path": "action_result.data.*.replied_at",
+          "data_type": "string",
+          "column_name": "Replied At",
+          "column_order": 4
+        },
+        {
+          "data_path": "action_result.data.*.non_fatal_errors",
+          "data_type": "string",
+          "column_name": "Errors",
+          "column_order": 5
+        }
+      ],
+      "render": {
+        "type": "custom",
+        "width": 12,
+        "height": 5,
+        "title": "Reply to Parent",
+        "view": "one_ticketing_view.display_reply_to_parent_widget"
+      },
+      "versions": "EQ(*)"
+    },
+    {
+      "action": "start case monitor",
+      "identifier": "start_case_monitor",
+      "description": "Child action: activates per-case monitoring for a child container. Creates a monitor_heartbeat artifact on the child container and registers the parent-child mapping in app state. Called automatically by create_child_case and can be called manually to activate monitoring. Replaces the on_poll container-creation pattern \u2014 no new containers are ever created by the monitor.",
+      "type": "generic",
+      "read_only": false,
+      "parameters": {
+        "container_id": {
+          "description": "Local SOAR container ID of the child case to monitor.",
+          "data_type": "numeric",
+          "required": true,
+          "order": 0
+        },
+        "parent_case_id": {
+          "description": "Parent SOAR container ID to monitor for updates.",
+          "data_type": "string",
+          "required": true,
+          "order": 1
+        },
+        "check_interval_minutes": {
+          "description": "How often (in minutes) to check the parent for updates. Default: 5.",
+          "data_type": "numeric",
+          "required": false,
+          "order": 2
+        }
+      },
+      "output": [
+        {
+          "data_path": "action_result.data.*.container_id",
+          "data_type": "numeric",
+          "column_name": "Container ID",
+          "column_order": 0
+        },
+        {
+          "data_path": "action_result.data.*.parent_case_id",
+          "data_type": "string",
+          "column_name": "Parent Case ID",
+          "column_order": 1
+        },
+        {
+          "data_path": "action_result.data.*.heartbeat_artifact_id",
+          "data_type": "numeric",
+          "column_name": "Heartbeat Artifact ID",
+          "column_order": 2
+        },
+        {
+          "data_path": "action_result.data.*.started_at",
+          "data_type": "string",
+          "column_name": "Started At",
+          "column_order": 3
+        }
+      ],
+      "versions": "EQ(*)"
+    },
+    {
+      "action": "stop case monitor",
+      "identifier": "stop_case_monitor",
+      "description": "Child action: deactivates the per-case monitor for a child container. Sets monitorActive=false in the monitor_heartbeat artifact and marks the mapping as inactive in app state. Called automatically when the parent case is closed/resolved, and can be called manually by an analyst.",
+      "type": "generic",
+      "read_only": false,
+      "parameters": {
+        "container_id": {
+          "description": "Local SOAR container ID of the child case to stop monitoring.",
+          "data_type": "numeric",
+          "required": false,
+          "order": 0
+        },
+        "parent_case_id": {
+          "description": "Parent SOAR container ID. Used to look up mapping if container_id is not provided.",
+          "data_type": "string",
+          "required": false,
+          "order": 1
+        }
+      },
+      "output": [
+        {
+          "data_path": "action_result.data.*.container_id",
+          "data_type": "numeric",
+          "column_name": "Container ID",
+          "column_order": 0
+        },
+        {
+          "data_path": "action_result.data.*.parent_case_id",
+          "data_type": "string",
+          "column_name": "Parent Case ID",
+          "column_order": 1
+        },
+        {
+          "data_path": "action_result.data.*.stopped_at",
+          "data_type": "string",
+          "column_name": "Stopped At",
+          "column_order": 2
+        }
+      ],
+      "versions": "EQ(*)"
+    }
+  ]
+}

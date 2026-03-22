@@ -1,0 +1,663 @@
+<div class="no-padding fill-space"><div class="grid fill-space"><div class="grid-body widget-body no-border fill-space"><div class="scoller scrollbar-hidden">
+<style>
+/* ── Reply-to-Parent Widget v1.6.0 ── */
+#otr-tb-btn{background:#2a7a3a!important;color:#fff!important;border:none!important;padding:5px 13px!important;border-radius:4px!important;cursor:pointer!important;font-size:12px!important;font-weight:600!important;white-space:nowrap!important;margin:0 6px!important;vertical-align:middle!important}
+#otr-tb-btn:hover{background:#1a5a2a!important}
+#otr-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:99999;align-items:center;justify-content:center}
+#otr-modal{background:#1e2126;color:#ccd;border-radius:8px;padding:24px;width:580px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.7)}
+#otr-modal h3{margin:0 0 4px;color:#fff;font-size:15px}
+#otr-step-ind{font-size:11px;color:#888;margin-bottom:16px;display:block}
+#otr-modal label{display:block;font-size:11px;color:#999;margin:10px 0 3px}
+#otr-modal input,#otr-modal textarea{width:100%;box-sizing:border-box;background:#2a2f3a;border:1px solid #444;color:#eee;padding:5px 8px;border-radius:4px;font-size:13px}
+#otr-modal textarea{height:90px;resize:vertical}
+/* Observable list */
+#otr-obs-filter{margin-bottom:8px}
+#otr-obs-list{max-height:280px;overflow-y:auto;border:1px solid #333;border-radius:4px;padding:6px}
+#otr-obs-list::-webkit-scrollbar{width:6px}
+#otr-obs-list::-webkit-scrollbar-thumb{background:#444;border-radius:3px}
+.otr-obs-row{display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid #2a2f3a;font-size:12px}
+.otr-obs-row:last-child{border-bottom:none}
+.otr-obs-row input[type=checkbox]{flex:0 0 16px;cursor:pointer}
+.otr-type-badge{flex:0 0 52px;font-size:10px;padding:2px 5px;border-radius:3px;text-align:center;font-weight:600}
+.otr-type-ip{background:#5a1a1a;color:#ff8888}
+.otr-type-domain{background:#1a3a5a;color:#88aaff}
+.otr-type-hash{background:#2a2a1a;color:#ffcc44}
+.otr-type-email{background:#1a2a1a;color:#88cc88}
+.otr-type-other{background:#2a2a2a;color:#aaa}
+.otr-obs-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#ccd}
+.otr-obs-val{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#888;font-size:11px}
+#otr-sel-count{font-size:11px;color:#888;margin:6px 0 2px}
+/* New observable rows */
+.otr-new-row{display:flex;gap:6px;align-items:center;margin-bottom:5px}
+.otr-new-row select{flex:0 0 175px;background:#2a2f3a;border:1px solid #444;color:#eee;padding:4px 6px;border-radius:4px;font-size:12px}
+.otr-new-row input{flex:1;background:#2a2f3a;border:1px solid #444;color:#eee;padding:4px 6px;border-radius:4px;font-size:12px}
+.otr-rm{background:#555;color:#fff;border:none;padding:3px 7px;border-radius:3px;cursor:pointer;font-size:11px}
+#otr-add-obs{background:#2a3a2a;color:#8c8;border:1px solid #3a5a3a;padding:4px 12px;border-radius:3px;cursor:pointer;font-size:12px;margin-top:6px}
+/* Footer */
+.otr-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.otr-btn-sec{background:#333;color:#ccd;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-size:12px}
+.otr-btn-pri{background:#2a7a3a;color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:600}
+.otr-btn-pri:disabled{opacity:.5;cursor:not-allowed}
+#otr-preview{font-size:11px;color:#888;margin-top:8px}
+#otr-msg{margin-top:8px;font-size:12px;min-height:14px}
+#otr-loading{color:#888;font-size:13px;padding:16px 0;text-align:center}
+#otr-all-wrap{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;font-size:11px;color:#888}
+/* ── Communication History ── */
+#otr-hist-wrap{padding:10px 4px 4px;font-size:12px}
+.otr-hist-section{margin-bottom:16px}
+.otr-hist-hdr{font-size:10px;font-weight:700;color:#8ab;letter-spacing:.7px;text-transform:uppercase;border-bottom:1px solid #2a2f3a;padding-bottom:4px;margin-bottom:8px}
+.otr-hist-task-title{color:#eee;font-size:13px;font-weight:600;margin-bottom:4px}
+.otr-hist-task-desc{color:#aaa;font-size:12px;line-height:1.5;white-space:pre-wrap;margin-bottom:4px;max-height:90px;overflow:hidden}
+.otr-hist-meta{color:#666;font-size:11px;margin-top:2px}
+.otr-hist-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.otr-hist-tbl th{color:#666;font-weight:600;text-align:left;padding:3px 6px;border-bottom:1px solid #2a2f3a;font-size:10px;text-transform:uppercase;letter-spacing:.4px}
+.otr-hist-tbl td{color:#bbc;padding:5px 6px;border-bottom:1px solid #1e2228;vertical-align:middle}
+.otr-hist-tbl tr:last-child td{border-bottom:none}
+.otr-hist-tbl tr:hover td{background:#20252d}
+.otr-hist-preview{color:#778;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
+.otr-hist-badge{display:inline-block;background:#1a3a1a;color:#7b7;border:1px solid #2a4a2a;padding:1px 7px;border-radius:10px;font-size:10px;white-space:nowrap;margin-right:4px}
+.otr-hist-type{display:inline-block;background:#1a2535;color:#6af;padding:1px 6px;border-radius:3px;font-size:10px;white-space:nowrap}
+.otr-view-btn{background:#22303e;color:#7af;border:1px solid #2a4a6a;padding:2px 9px;border-radius:3px;cursor:pointer;font-size:11px;white-space:nowrap}
+.otr-view-btn:hover{background:#2a3d50;color:#9cf}
+/* View-detail overlay */
+#otr-view-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.65);z-index:100000;align-items:center;justify-content:center}
+#otr-view-modal{background:#1e2126;color:#ccd;border-radius:8px;padding:24px;width:560px;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.75)}
+#otr-view-modal h3{margin:0 0 3px;color:#fff;font-size:14px}
+#otr-view-meta{font-size:11px;color:#777;margin-bottom:14px}
+#otr-view-content{font-size:12px;line-height:1.6;color:#ccd;white-space:pre-wrap;background:#161a1f;padding:12px;border-radius:4px;border:1px solid #2a2f3a;margin-bottom:4px;min-height:32px}
+#otr-view-cef{font-size:11px;color:#888;margin-top:10px}
+#otr-view-cef table{border-collapse:collapse;width:100%}
+#otr-view-cef td{padding:3px 6px;border-bottom:1px solid #222;vertical-align:top}
+#otr-view-cef td:first-child{color:#6af;width:150px;font-weight:600;white-space:nowrap}
+.otr-view-foot{display:flex;justify-content:flex-end;margin-top:14px}
+</style>
+
+<div id="otr-root"></div>
+
+<div id="otr-overlay">
+<div id="otr-modal">
+  <h3>↩ Reply to Parent</h3>
+  <span id="otr-step-ind">Step 1 of 2 — Select observables</span>
+
+  <!-- ── Step 1: Observables ── -->
+  <div id="otr-step1">
+    <div id="otr-loading">Loading observables...</div>
+    <div id="otr-obs-section" style="display:none">
+      <label>Filter observables</label>
+      <input id="otr-obs-filter" type="text" placeholder="IP, domain, hash...">
+      <div id="otr-all-wrap">
+        <label style="margin:0;display:flex;align-items:center;gap:5px;cursor:pointer">
+          <input type="checkbox" id="otr-all"> Select all
+        </label>
+        <span id="otr-sel-count">0 selected</span>
+      </div>
+      <div id="otr-obs-list"></div>
+    </div>
+    <div id="otr-no-obs" style="display:none;color:#888;font-size:12px;padding:8px 0">
+      No unsynced artifacts found.
+    </div>
+    <!-- Always-visible: add new observables (shown after loading, regardless of existing artifacts) -->
+    <div id="otr-add-section" style="display:none">
+      <label style="margin-top:12px">Add new observables</label>
+      <div id="otr-new-obs"></div>
+      <button id="otr-add-obs" type="button">+ Add observable</button>
+    </div>
+    <div class="otr-foot">
+      <button class="otr-btn-sec" id="otr-cancel1" type="button">Cancel</button>
+      <button class="otr-btn-sec" id="otr-skip1" type="button">Skip →</button>
+      <button class="otr-btn-pri" id="otr-next1" type="button">Next →</button>
+    </div>
+  </div>
+
+  <!-- ── Step 2: Note ── -->
+  <div id="otr-step2" style="display:none">
+    <label>Subject (optional)</label>
+    <input id="otr-title" type="text" placeholder="e.g. Analysis complete — IOC confirmed">
+    <label>Reply / Findings *</label>
+    <textarea id="otr-note" placeholder="Analysis results, recommendations, follow-up questions..."></textarea>
+    <div id="otr-preview"></div>
+    <div class="otr-foot">
+      <button class="otr-btn-sec" id="otr-back2" type="button">← Back</button>
+      <button class="otr-btn-pri" id="otr-submit" type="button">Send to Parent</button>
+    </div>
+    <div id="otr-msg"></div>
+  </div>
+</div>
+</div>
+
+<!-- ── View-detail overlay (communication history) ── -->
+<div id="otr-view-overlay">
+<div id="otr-view-modal">
+  <h3 id="otr-view-title"></h3>
+  <div id="otr-view-meta"></div>
+  <div id="otr-view-content"></div>
+  <div id="otr-view-cef"></div>
+  <div class="otr-view-foot">
+    <button class="otr-btn-sec" id="otr-view-close" type="button">Close</button>
+  </div>
+</div>
+</div>
+
+<script type="text/javascript">
+/* Reply to Parent widget — injected into the SOAR Investigation page context */
+(function(){
+  /* CIM field definitions for the "Add observable" dropdown.
+     Ref: Splunk CIM 5.1 — https://help.splunk.com/en/splunk-enterprise-security-8/common-information-model */
+  var CIM_FIELDS=[
+    /* Network Traffic */
+    {f:"sourceAddress",          l:"Source IP",             cat:"Network"},
+    {f:"destinationAddress",     l:"Destination IP",        cat:"Network"},
+    {f:"sourcePort",             l:"Source Port",           cat:"Network"},
+    {f:"destinationPort",        l:"Destination Port",      cat:"Network"},
+    {f:"transportProtocol",      l:"Protocol",              cat:"Network"},
+    {f:"bytesIn",                l:"Bytes In",              cat:"Network"},
+    {f:"bytesOut",               l:"Bytes Out",             cat:"Network"},
+    /* Web / URL */
+    {f:"requestURL",             l:"Request URL",           cat:"Web"},
+    {f:"domainName",             l:"Domain Name",           cat:"Web"},
+    {f:"requestMethod",          l:"HTTP Method",           cat:"Web"},
+    {f:"httpUserAgent",          l:"HTTP User-Agent",       cat:"Web"},
+    {f:"userAgent",              l:"User-Agent (generic)",  cat:"Web"},
+    /* Endpoint / File */
+    {f:"fileName",               l:"File Name",             cat:"Endpoint"},
+    {f:"filePath",               l:"File Path",             cat:"Endpoint"},
+    {f:"fileHashMd5",            l:"MD5 Hash",              cat:"Endpoint"},
+    {f:"fileHashSha1",           l:"SHA-1 Hash",            cat:"Endpoint"},
+    {f:"fileHashSha256",         l:"SHA-256 Hash",          cat:"Endpoint"},
+    {f:"processName",            l:"Process Name",          cat:"Endpoint"},
+    {f:"parentProcessName",      l:"Parent Process",        cat:"Endpoint"},
+    {f:"commandLine",            l:"Command Line",          cat:"Endpoint"},
+    {f:"registryPath",           l:"Registry Path",         cat:"Endpoint"},
+    /* Identity / Auth */
+    {f:"emailAddress",           l:"Email Address",         cat:"Identity"},
+    {f:"userName",               l:"Username",              cat:"Identity"},
+    {f:"userDomain",             l:"User Domain",           cat:"Identity"},
+    /* Vulnerability */
+    {f:"vulnerabilityId",        l:"CVE / Vuln ID",         cat:"Vulnerability"},
+    {f:"vulnerabilityName",      l:"Vulnerability Name",    cat:"Vulnerability"},
+    /* Certificates / Crypto */
+    {f:"certificateSubject",     l:"Cert Subject",          cat:"Certificate"},
+    {f:"certificateIssuer",      l:"Cert Issuer",           cat:"Certificate"},
+    /* SMTP */
+    {f:"subject",                l:"Email Subject",         cat:"Email"},
+    {f:"sender",                 l:"Sender",                cat:"Email"},
+    {f:"recipient",              l:"Recipient",             cat:"Email"},
+    {f:"messageId",              l:"Message-ID",            cat:"Email"},
+    /* Generic */
+    {f:"deviceCustomString1",    l:"Custom String 1",       cat:"Generic"},
+    {f:"deviceCustomString2",    l:"Custom String 2",       cat:"Generic"},
+  ];
+
+  /* Populate a <select> element with CIM fields grouped by category */
+  function buildCimSelect(selEl){
+    selEl.innerHTML="";
+    var cats={};
+    CIM_FIELDS.forEach(function(c){
+      if(!cats[c.cat]) cats[c.cat]=[];
+      cats[c.cat].push(c);
+    });
+    Object.keys(cats).sort().forEach(function(cat){
+      var grp=document.createElement("optgroup"); grp.label=cat;
+      cats[cat].forEach(function(c){
+        var o=document.createElement("option"); o.value=c.f; o.textContent=c.l+" ("+c.f+")"; grp.appendChild(o);
+      });
+      selEl.appendChild(grp);
+    });
+  }
+
+  var _parentCaseId = null;
+  var _allArtifacts = [];   // unsynced artifacts available for selection
+  var _selectedIds  = [];
+  var _newObs       = [];
+
+  /* ── helpers ── */
+  function getCid(){
+    try{ var m=window.location.pathname.match(/\/mission\/(\d+)/); return m?parseInt(m[1],10):0; }
+    catch(e){ return 0; }
+  }
+  function getCsrf(){
+    try{ return (document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/)||[])[1]||""; }catch(e){ return ""; }
+  }
+  function typeInfo(art){
+    var cef=art.cef||{};
+    if(cef.sourceAddress||cef.destinationAddress) return {cls:"otr-type-ip",   label:"IP"};
+    if(cef.domainName||cef.requestURL)            return {cls:"otr-type-domain",label:"Domain"};
+    if(cef.fileHashMd5||cef.fileHashSha1||cef.fileHashSha256) return {cls:"otr-type-hash",label:"Hash"};
+    if(cef.emailAddress)                          return {cls:"otr-type-email", label:"Email"};
+    return {cls:"otr-type-other",label:"Other"};
+  }
+  function cefSummary(cef){
+    var entries=Object.entries(cef||{});
+    if(!entries.length) return "";
+    return entries.slice(0,2).map(function(e){ return e[0]+": "+String(e[1]).slice(0,30); }).join(" · ");
+  }
+  function updateSelCount(){
+    var checked=document.querySelectorAll("#otr-obs-list input[type=checkbox]:checked");
+    document.getElementById("otr-sel-count").textContent = checked.length+" selected";
+  }
+
+  /* ── Step 1: render observable list ── */
+  function renderObsList(){
+    var filter=(document.getElementById("otr-obs-filter")||{}).value||"";
+    filter=filter.toLowerCase();
+    var list=document.getElementById("otr-obs-list");
+    list.innerHTML="";
+    var shown=_allArtifacts.filter(function(a){
+      if(!filter) return true;
+      return (a.name+" "+JSON.stringify(a.cef||{})).toLowerCase().indexOf(filter)>=0;
+    });
+    if(!shown.length){
+      list.innerHTML='<div style="color:#666;font-size:12px;padding:8px">No matches.</div>';
+      return;
+    }
+    shown.forEach(function(art){
+      var ti=typeInfo(art);
+      var row=document.createElement("div"); row.className="otr-obs-row";
+      var cb=document.createElement("input"); cb.type="checkbox"; cb.value=art.id;
+      cb.addEventListener("change", updateSelCount);
+      var badge=document.createElement("span");
+      badge.className="otr-type-badge "+ti.cls; badge.textContent=ti.label;
+      var name=document.createElement("span"); name.className="otr-obs-name";
+      name.textContent=art.name||"Artifact #"+art.id;
+      var val=document.createElement("span"); val.className="otr-obs-val";
+      val.textContent=cefSummary(art.cef);
+      row.appendChild(cb); row.appendChild(badge); row.appendChild(name); row.appendChild(val);
+      list.appendChild(row);
+    });
+    updateSelCount();
+  }
+
+  /* ── New observable rows ── */
+  function addNewObsRow(){
+    var wrap=document.createElement("div"); wrap.className="otr-new-row";
+    var sel=document.createElement("select"); buildCimSelect(sel);
+    var inp=document.createElement("input"); inp.type="text"; inp.placeholder="Value";
+    var rm=document.createElement("button"); rm.className="otr-rm"; rm.type="button"; rm.textContent="X";
+    rm.onclick=function(){ wrap.parentNode.removeChild(wrap); };
+    wrap.appendChild(sel); wrap.appendChild(inp); wrap.appendChild(rm);
+    document.getElementById("otr-new-obs").appendChild(wrap);
+  }
+  function collectNewObs(){
+    var rows=document.querySelectorAll("#otr-new-obs .otr-new-row"); var out=[];
+    rows.forEach(function(r){
+      var f=r.querySelector("select").value;
+      var v=r.querySelector("input").value.trim();
+      if(v){
+        var fieldInfo=CIM_FIELDS.filter(function(c){ return c.f===f; })[0];
+        var lbl=fieldInfo?fieldInfo.l:f;
+        var cef={}; cef[f]=v; out.push({name:lbl+": "+v,type:"network",cef:cef});
+      }
+    });
+    return out;
+  }
+
+  /* ── step navigation ── */
+  function goStep2(skip){
+    _selectedIds=skip?[]:Array.from(document.querySelectorAll("#otr-obs-list input[type=checkbox]:checked"))
+      .map(function(cb){ return cb.value; });
+    _newObs=skip?[]:collectNewObs();
+    document.getElementById("otr-step1").style.display="none";
+    document.getElementById("otr-step2").style.display="block";
+    document.getElementById("otr-step-ind").textContent="Step 2 of 2 — Compose reply";
+    updatePreview();
+  }
+  function goStep1(){
+    document.getElementById("otr-step2").style.display="none";
+    document.getElementById("otr-step1").style.display="block";
+    document.getElementById("otr-step-ind").textContent="Step 1 of 2 — Select observables";
+  }
+  function updatePreview(){
+    var n=_selectedIds.length+_newObs.length;
+    var prev=document.getElementById("otr-preview");
+    prev.textContent = n>0
+      ? n+" observable(s) + note will be sent to Parent #"+_parentCaseId
+      : "Only note will be sent to Parent #"+_parentCaseId;
+  }
+
+  /* ── submit ── */
+  function submit(){
+    var note=document.getElementById("otr-note").value.trim();
+    var title=document.getElementById("otr-title").value.trim();
+    var msg=document.getElementById("otr-msg");
+    var btn=document.getElementById("otr-submit");
+    if(!note){ msg.textContent="Reply text is required."; return; }
+    btn.disabled=true;
+    var cid=getCid();
+    var csrf=getCsrf();
+
+    /* Step 1: save each new observable as a local child artifact (tagged synced-to-parent) */
+    msg.textContent=_newObs.length>0?"Saving "+_newObs.length+" new observable(s)...":"Creating artifact...";
+    var _submitTs=Date.now();
+    var savePromises=_newObs.map(function(obs,idx){
+      /* Timestamp + index in SDI prevents "artifact already exists" on re-submission */
+      var sdi="ot_new_obs_"+cid+"_"+_submitTs+"_"+idx+"_"+obs.name.replace(/[^a-zA-Z0-9]/g,"_").slice(0,30);
+      return fetch("/rest/artifact",{
+        method:"POST", credentials:"same-origin",
+        headers:{"Content-Type":"application/json","X-CSRFToken":csrf,"X-Requested-With":"XMLHttpRequest"},
+        body:JSON.stringify({
+          container_id:           cid,
+          label:                  "artifact",
+          name:                   obs.name,
+          type:                   obs.type||"network",
+          source_data_identifier: sdi,
+          cef:                    obs.cef,
+          tags:                   ["synced-to-parent"],
+          run_automation:         false
+        })
+      }).then(function(r){ return r.json(); });
+    });
+
+    Promise.all(savePromises).then(function(results){
+      /* collect IDs of newly created local artifacts */
+      var newIds=results.filter(function(d){ return d.id; }).map(function(d){ return String(d.id); });
+      var allSelectedIds=_selectedIds.concat(newIds);
+      msg.textContent="Creating reply artifact...";
+      /* newObservables intentionally excluded from CEF — pre-created above, IDs in selectedArtifactIds.
+         Including raw observable data here would cause the connector to duplicate each artifact. */
+      var cef={
+        parentCaseId:        String(_parentCaseId),
+        noteContent:         note,
+        selectedArtifactIds: allSelectedIds.join(",")
+      };
+      if(title) cef.noteTitle=title;
+      /* Timestamp in name + explicit SDI allows multiple replies from the same child
+         without SOAR rejecting with "artifact already exists". */
+      var _ts = Date.now();
+      var artName = title
+        ? "Reply to Parent: "+title
+        : "Reply to Parent #"+_parentCaseId;
+      var artSdi = "ot_child_reply_"+cid+"_"+_ts;
+      return fetch("/rest/artifact",{
+        method:"POST", credentials:"same-origin",
+        headers:{"Content-Type":"application/json","X-CSRFToken":csrf,"X-Requested-With":"XMLHttpRequest"},
+        body:JSON.stringify({
+          container_id:           cid,
+          label:                  "child_reply",
+          name:                   artName,
+          type:                   "network",
+          source_data_identifier: artSdi,
+          cef:                    cef,
+          run_automation:         true
+        })
+      });
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.id||d.success){
+        msg.style.color="#4caf50";
+        msg.textContent="Artifact #"+d.id+" created — playbook triggered.";
+        setTimeout(function(){
+          hideOverlay(); msg.textContent=""; msg.style.color=""; btn.disabled=false;
+        },2200);
+      } else { msg.textContent="Error: "+JSON.stringify(d); btn.disabled=false; }
+    })
+    .catch(function(e){ msg.textContent=e.message; btn.disabled=false; });
+  }
+
+  /* ── overlay ── */
+  function showOverlay(){ document.getElementById("otr-overlay").style.display="flex"; }
+  function hideOverlay(){ document.getElementById("otr-overlay").style.display="none"; }
+
+  /* ── Communication History ── */
+  function escHtml(s){
+    return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  function fmtDate(s){
+    if(!s) return "—";
+    try{
+      var d=new Date(s);
+      return d.toLocaleDateString()+"\u00a0"+d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+    }catch(e){ return s; }
+  }
+
+  function showViewModal(title, meta, content, art){
+    document.getElementById("otr-view-title").textContent = title;
+    document.getElementById("otr-view-meta").textContent  = meta;
+    document.getElementById("otr-view-content").textContent = content || "(no content)";
+    /* Extra CEF fields (skip the big ones already shown) */
+    var cef  = art.cef||{};
+    var skip = ["noteContent","note","parentCaseId","selectedArtifactIds","childId","targetChildId","noteTitle"];
+    var keys = Object.keys(cef).filter(function(k){ return skip.indexOf(k)<0 && cef[k]!==null && cef[k]!==undefined && cef[k]!==""; });
+    var cefDiv = document.getElementById("otr-view-cef");
+    if(keys.length){
+      cefDiv.innerHTML = "<table>"+keys.map(function(k){
+        return "<tr><td>"+escHtml(k)+"</td><td>"+escHtml(String(cef[k]).slice(0,250))+"</td></tr>";
+      }).join("")+"</table>";
+    } else { cefDiv.innerHTML=""; }
+    document.getElementById("otr-view-overlay").style.display="flex";
+  }
+
+  function renderHistory(taskArts, updateArts, replyArts, fromParentCount){
+    var wrap=document.getElementById("otr-hist-wrap");
+    if(!wrap) return;
+    var html=[];
+
+    /* ── Section 1: Initial Task ── */
+    var task=taskArts[0];
+    if(task){
+      var tc=task.cef||{};
+      var ttitle=tc.taskTitle||task.name||"Task";
+      var tdesc =tc.taskDescription||"";
+      var tmeta=[];
+      if(tc.severity) tmeta.push("Severity: "+tc.severity);
+      if(tc.tlp)      tmeta.push("TLP: "+tc.tlp);
+      if(fromParentCount>0) tmeta.push(fromParentCount+" observable(s) attached");
+      html.push(
+        '<div class="otr-hist-section">',
+        '<div class="otr-hist-hdr">\uD83D\uDCCB Initial Task</div>',
+        '<div class="otr-hist-task-title">'+escHtml(ttitle)+'</div>',
+        tdesc ? '<div class="otr-hist-task-desc">'+escHtml(tdesc.slice(0,400))+(tdesc.length>400?"\u2026":"")+'</div>' : "",
+        tmeta.length ? '<div class="otr-hist-meta">'+escHtml(tmeta.join(" \u00b7 "))+'</div>' : "",
+        '</div>'
+      );
+    }
+
+    /* ── Section 2: Updates from Parent ── */
+    if(updateArts.length){
+      html.push(
+        '<div class="otr-hist-section">',
+        '<div class="otr-hist-hdr">\uD83D\uDCE8 Updates from Parent <span style="color:#777;font-weight:400;text-transform:none;letter-spacing:0">('+updateArts.length+')</span></div>',
+        '<table class="otr-hist-tbl"><tr><th>Date</th><th>Type</th><th>Preview</th><th></th></tr>'
+      );
+      updateArts.forEach(function(art,i){
+        var c=art.cef||{};
+        var note=c.note||c.noteContent||"";  /* parent uses cef.note */
+        var prev=note.slice(0,80)+(note.length>80?"\u2026":"");
+        html.push(
+          '<tr>',
+          '<td style="white-space:nowrap;color:#667">'+escHtml(fmtDate(art.create_time))+'</td>',
+          '<td>'+(c.updateType?'<span class="otr-hist-type">'+escHtml(c.updateType)+'</span>':'<span style="color:#555">\u2014</span>')+'</td>',
+          '<td class="otr-hist-preview" title="'+escHtml(note.slice(0,300))+'">'+escHtml(prev)+'</td>',
+          '<td><button class="otr-view-btn" data-kind="update" data-idx="'+i+'" type="button">View</button></td>',
+          '</tr>'
+        );
+      });
+      html.push('</table></div>');
+    }
+
+    /* ── Section 3: Replies Sent ── */
+    if(replyArts.length){
+      html.push(
+        '<div class="otr-hist-section">',
+        '<div class="otr-hist-hdr">\u21A9 Replies Sent <span style="color:#777;font-weight:400;text-transform:none;letter-spacing:0">('+replyArts.length+')</span></div>',
+        '<table class="otr-hist-tbl"><tr><th>Date</th><th>Subject / Obs</th><th>Preview</th><th></th></tr>'
+      );
+      replyArts.forEach(function(art,i){
+        var c=art.cef||{};
+        var note=c.noteContent||"";
+        var prev=note.slice(0,70)+(note.length>70?"\u2026":"");
+        var subject=c.noteTitle||"";
+        var obsIds=c.selectedArtifactIds?c.selectedArtifactIds.split(",").filter(Boolean):[];
+        var obsBadge=obsIds.length?'<span class="otr-hist-badge">'+obsIds.length+"\u00a0obs</span>":'';
+        html.push(
+          '<tr>',
+          '<td style="white-space:nowrap;color:#667">'+escHtml(fmtDate(art.create_time))+'</td>',
+          '<td style="white-space:nowrap">'+obsBadge+(subject?escHtml(subject.slice(0,30)):'<span style="color:#555">\u2014</span>')+'</td>',
+          '<td class="otr-hist-preview" title="'+escHtml(note.slice(0,300))+'">'+escHtml(prev)+'</td>',
+          '<td><button class="otr-view-btn" data-kind="reply" data-idx="'+i+'" type="button">View</button></td>',
+          '</tr>'
+        );
+      });
+      html.push('</table></div>');
+    }
+
+    if(!task && !updateArts.length && !replyArts.length){
+      html.push('<div style="color:#555;font-size:12px;padding:8px 4px">No task history available yet.</div>');
+    }
+
+    wrap.innerHTML=html.join("");
+
+    /* Wire View buttons */
+    wrap.querySelectorAll(".otr-view-btn").forEach(function(btn){
+      btn.addEventListener("click",function(){
+        var kind=this.getAttribute("data-kind");
+        var idx =parseInt(this.getAttribute("data-idx"),10);
+        if(kind==="update"){
+          var art=updateArts[idx]; var c=art.cef||{};
+          showViewModal(
+            "Update from Parent",
+            "Received: "+fmtDate(art.create_time)+(c.updateType?" \u00b7 Type: "+c.updateType:""),
+            c.note||c.noteContent||"", art   /* parent stores text in cef.note */
+          );
+        } else {
+          var art=replyArts[idx]; var c=art.cef||{};
+          showViewModal(
+            c.noteTitle?"Reply: "+c.noteTitle:"Reply to Parent",
+            "Sent: "+fmtDate(art.create_time),
+            c.noteContent||"", art
+          );
+        }
+      });
+    });
+  }
+
+  function loadHistory(){
+    var cid=getCid(); if(!cid) return;
+    var root=document.getElementById("otr-root"); if(!root) return;
+    if(document.getElementById("otr-hist-wrap")) return; /* already loaded */
+    root.innerHTML='<div id="otr-hist-wrap"><div style="color:#667;font-size:11px;padding:10px 4px;text-align:center">Loading history\u2026</div></div>';
+    Promise.all([
+      fetch("/rest/artifact?_filter_container_id="+cid+"&_filter_label=%22child_task_request%22&page_size=5",{credentials:"same-origin"}).then(function(r){return r.json();}),
+      fetch("/rest/artifact?_filter_container_id="+cid+"&_filter_label=%22parent_update%22&page_size=50",{credentials:"same-origin"}).then(function(r){return r.json();}),
+      fetch("/rest/artifact?_filter_container_id="+cid+"&_filter_label=%22child_reply%22&page_size=50",{credentials:"same-origin"}).then(function(r){return r.json();}),
+      fetch("/rest/artifact?_filter_container_id="+cid+"&page_size=200",{credentials:"same-origin"}).then(function(r){return r.json();})
+    ]).then(function(res){
+      var taskArts        = res[0].data||[];
+      var updateArts      = res[1].data||[];
+      var replyArts       = (res[2].data||[]).filter(function(a){ return (a.tags||[]).indexOf("synced-to-parent")>=0; });
+      var fromParentCount = (res[3].data||[]).filter(function(a){ return (a.tags||[]).indexOf("from-parent")>=0; }).length;
+      renderHistory(taskArts, updateArts, replyArts, fromParentCount);
+    }).catch(function(){
+      var w=document.getElementById("otr-hist-wrap");
+      if(w) w.innerHTML='<div style="color:#c66;font-size:11px;padding:6px 4px">Could not load history.</div>';
+    });
+  }
+
+  /* ── init: detect child context, load history, inject toolbar button ── */
+  /* Artifact list is not pre-fetched here — fetched fresh on every modal open. */
+  function init(){
+    var cid=getCid();
+    if(!cid) return;
+    fetch("/rest/artifact?_filter_container_id="+cid+
+          "&_filter_label=%22parent_case_reference%22&page_size=5",
+          {credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var arts=data.data||[];
+      var ref=arts.length>0?arts[0]:null;
+      if(!ref||!ref.cef||!ref.cef.parent_case_id){
+        /* Not a child container — do not inject button */
+        return;
+      }
+      _parentCaseId=ref.cef.parent_case_id;
+      loadHistory();
+      injectToolbarBtn();
+    })
+    .catch(function(){
+      /* silently fail — parent instance or network error */
+    });
+  }
+
+  /* ── toolbar button ── */
+  function injectToolbarBtn(){
+    if(document.getElementById("otr-tb-btn")) return;
+    var btn=document.createElement("button");
+    btn.id="otr-tb-btn"; btn.textContent="↩ Reply to Parent";
+    btn.title="Send reply to parent — OneTicketing Sync";
+    btn.onclick=function(){
+      /* Fresh fetch on every open — avoids stale list after new artifacts are created. */
+      var loading=document.getElementById("otr-loading");
+      var section=document.getElementById("otr-obs-section");
+      var noObs=document.getElementById("otr-no-obs");
+      var addSec=document.getElementById("otr-add-section");
+      loading.style.display="block"; section.style.display="none";
+      noObs.style.display="none"; addSec.style.display="none";
+      /* reset new observable rows */
+      document.getElementById("otr-new-obs").innerHTML="";
+      /* reset to step 1 */
+      document.getElementById("otr-step1").style.display="block";
+      document.getElementById("otr-step2").style.display="none";
+      document.getElementById("otr-step-ind").textContent="Step 1 of 2 — Select observables";
+      showOverlay();
+      var _cid=getCid();
+      if(!_cid){ loading.style.display="none"; addSec.style.display="block"; return; }
+      fetch("/rest/artifact?_filter_container_id="+_cid+"&page_size=100",{credentials:"same-origin"})
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        _allArtifacts=(data.data||[]).filter(function(a){
+          if(a.label!=="artifact") return false;          /* whitelist: real observables only */
+          if((a.tags||[]).indexOf("synced-to-parent")>=0) return false;
+          if((a.tags||[]).indexOf("reply-sent")>=0) return false;
+          if((a.tags||[]).indexOf("from-parent")>=0) return false;
+          return true;
+        });
+        loading.style.display="none";
+        if(_allArtifacts.length===0){ noObs.style.display="block"; }
+        else { section.style.display="block"; renderObsList(); }
+        addSec.style.display="block";
+      })
+      .catch(function(){
+        loading.style.display="none"; noObs.style.display="block"; addSec.style.display="block";
+      });
+    };
+    var inserted=false;
+    var btns=document.querySelectorAll("button,[role='button']");
+    for(var i=0;i<btns.length&&!inserted;i++){
+      var t=btns[i].textContent.trim();
+      if(t==="Summary"||t==="Analyst"||t==="+ Child Task"){
+        var par=btns[i].parentNode;
+        for(var k=0;k<5&&par&&par!==document.body;k++){
+          if(par.children.length>=2){ par.appendChild(btn); inserted=true; break; }
+          par=par.parentNode;
+        }
+      }
+    }
+    if(!inserted){
+      btn.style.cssText="position:fixed;bottom:72px;right:28px;z-index:99999;"+
+        "padding:10px 18px;border-radius:28px;background:#2a7a3a;color:#fff;border:none;"+
+        "cursor:pointer;font-size:13px;font-weight:600;box-shadow:0 4px 14px rgba(42,122,58,.7);";
+      document.body.appendChild(btn);
+    }
+  }
+
+  /* ── wire controls ── */
+  document.getElementById("otr-cancel1").onclick = hideOverlay;
+  document.getElementById("otr-overlay").onclick  = function(e){ if(e.target===this) hideOverlay(); };
+  document.getElementById("otr-skip1").onclick    = function(){ goStep2(true); };
+  document.getElementById("otr-next1").onclick    = function(){ goStep2(false); };
+  document.getElementById("otr-back2").onclick    = goStep1;
+  document.getElementById("otr-add-obs").onclick  = function(e){ e.preventDefault(); addNewObsRow(); };
+  document.getElementById("otr-submit").onclick   = submit;
+  document.getElementById("otr-all").onchange     = function(){
+    document.querySelectorAll("#otr-obs-list input[type=checkbox]").forEach(function(cb){ cb.checked=this.checked; }.bind(this));
+    updateSelCount();
+  };
+  document.getElementById("otr-obs-filter").oninput = renderObsList;
+  document.getElementById("otr-view-close").onclick  = function(){ document.getElementById("otr-view-overlay").style.display="none"; };
+  document.getElementById("otr-view-overlay").onclick = function(e){ if(e.target===this) this.style.display="none"; };
+
+  /* ── start ── */
+  init();
+})();
+</script>
+</div></div></div></div>

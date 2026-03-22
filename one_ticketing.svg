@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="48" fill="#003831"/>
+  <!-- Parent node (top centre) -->
+  <rect x="35" y="12" width="30" height="18" rx="4" fill="#00b388"/>
+  <text x="50" y="24.5" font-family="Arial" font-size="8" font-weight="bold"
+        fill="#ffffff" text-anchor="middle">PARENT</text>
+  <!-- Connector lines from parent to children -->
+  <line x1="50" y1="30" x2="22" y2="56" stroke="#00b388" stroke-width="1.8" stroke-dasharray="3,2"/>
+  <line x1="50" y1="30" x2="50" y2="56" stroke="#00b388" stroke-width="1.8" stroke-dasharray="3,2"/>
+  <line x1="50" y1="30" x2="78" y2="56" stroke="#00b388" stroke-width="1.8" stroke-dasharray="3,2"/>
+  <!-- Child nodes -->
+  <rect x="8"  y="56" width="26" height="16" rx="3" fill="#1f6bb5"/>
+  <text x="21" y="67" font-family="Arial" font-size="6.5" font-weight="bold"
+        fill="#ffffff" text-anchor="middle">CHILD</text>
+  <rect x="37" y="56" width="26" height="16" rx="3" fill="#1f6bb5"/>
+  <text x="50" y="67" font-family="Arial" font-size="6.5" font-weight="bold"
+        fill="#ffffff" text-anchor="middle">CHILD</text>
+  <rect x="66" y="56" width="26" height="16" rx="3" fill="#1f6bb5"/>
+  <text x="79" y="67" font-family="Arial" font-size="6.5" font-weight="bold"
+        fill="#ffffff" text-anchor="middle">CHILD</text>
+  <!-- Sync arrows (bidirectional) -->
+  <text x="50" y="86" font-family="Arial" font-size="9" fill="#00b388" text-anchor="middle">⇅ SYNC</text>
+  <!-- Small dots at line ends -->
+  <circle cx="22" cy="56" r="2" fill="#00b388"/>
+  <circle cx="50" cy="56" r="2" fill="#00b388"/>
+  <circle cx="78" cy="56" r="2" fill="#00b388"/>
+</svg>
